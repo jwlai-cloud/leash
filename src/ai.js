@@ -1,11 +1,12 @@
 // Two AI roles: the shopping AGENT (proposes a cart) and the GUARD (judges it).
 // Provider: Claude or Gemini (AI_PROVIDER, else whichever key is set). Deterministic rules when no key or on any model error.
+import { execFileSync } from 'node:child_process';
 import { createBudget } from './budget.js';
 
 const ENV = process.env;
 const MAX_TOKENS = 800;
 const wanted = ENV.AI_PROVIDER
-  || (ENV.ANTHROPIC_API_KEY ? 'claude' : ENV.GEMINI_API_KEY ? 'gemini' : 'rules');
+  || (ENV.ANTHROPIC_API_KEY ? 'claude' : ENV.GEMINI_API_KEY ? 'gemini' : ENV.VERTEX_PROJECT ? 'vertex' : 'rules');
 
 // Each provider: build request, then normalise response to { text, usage: {input_tokens, output_tokens} }.
 const PROVIDERS = {
@@ -39,6 +40,27 @@ const PROVIDERS = {
     }),
   },
 };
+// Vertex AI: same Gemini body, OAuth token from local gcloud. Local dev only (needs gcloud on PATH).
+// Project and account are required explicitly so it never bills whatever gcloud's default happens to be.
+if (ENV.VERTEX_PROJECT && ENV.VERTEX_ACCOUNT) {
+  let tok = { value: null, until: 0 };
+  const token = () => {
+    if (Date.now() > tok.until) {
+      const value = execFileSync('gcloud', ['auth', 'print-access-token', `--account=${ENV.VERTEX_ACCOUNT}`], { encoding: 'utf8' }).trim();
+      tok = { value, until: Date.now() + 45 * 60_000 };
+    }
+    return tok.value;
+  };
+  PROVIDERS.vertex = {
+    model: ENV.GEMINI_MODEL || 'gemini-3.5-flash-lite',
+    request: (model, system, user) => ({
+      ...PROVIDERS.gemini.request(model, system, user),
+      url: `https://aiplatform.googleapis.com/v1/projects/${ENV.VERTEX_PROJECT}/locations/${ENV.VERTEX_LOCATION || 'global'}/publishers/google/models/${model}:generateContent`,
+      headers: { Authorization: `Bearer ${token()}`, 'x-goog-user-project': ENV.VERTEX_PROJECT },
+    }),
+    parse: PROVIDERS.gemini.parse,
+  };
+}
 const provider = PROVIDERS[wanted];
 export const aiMode = provider ? wanted : 'rules';
 export const aiModel = provider?.model || null;
@@ -54,7 +76,9 @@ export const aiBudget = createBudget({
 async function llm(system, user) {
   const reserved = aiBudget.reserve(system.length + user.length, MAX_TOKENS);
   if (reserved === null) throw new Error(`AI budget $${aiBudget.status().limitUsd} reached`);
-  const { url, headers, body } = provider.request(provider.model, system, user);
+  let req;
+  try { req = provider.request(provider.model, system, user); } catch (e) { aiBudget.settle(reserved); throw e; } // e.g. gcloud token failure: nothing sent
+  const { url, headers, body } = req;
   // On network errors/timeouts billing is unknown: keep the worst case booked (fail safe).
   const res = await fetch(url, {
     method: 'POST',
@@ -68,6 +92,8 @@ async function llm(system, user) {
   }
   const { text, usage } = provider.parse(await res.json());
   aiBudget.settle(reserved, usage);
+  const s = aiBudget.status();
+  console.log(`[ai-spend] ${aiMode}/${provider.model} in=${usage?.input_tokens ?? 0} out=${usage?.output_tokens ?? 0} total=$${s.spentUsd.toFixed(4)}/$${s.limitUsd} calls=${s.calls}`);
   const json = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1);
   return JSON.parse(json);
 }
