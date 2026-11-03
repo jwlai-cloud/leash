@@ -6,10 +6,29 @@ import { createBudget } from './budget.js';
 const ENV = process.env;
 const MAX_TOKENS = 800;
 const wanted = ENV.AI_PROVIDER
-  || (ENV.ANTHROPIC_API_KEY ? 'claude' : ENV.GEMINI_API_KEY ? 'gemini' : ENV.VERTEX_PROJECT ? 'vertex' : 'rules');
+  || (ENV.OPENROUTER_API_KEY ? 'openrouter' : ENV.ANTHROPIC_API_KEY ? 'claude' : ENV.GEMINI_API_KEY ? 'gemini' : ENV.VERTEX_PROJECT ? 'vertex' : 'rules');
 
 // Each provider: build request, then normalise response to { text, usage: {input_tokens, output_tokens} }.
 const PROVIDERS = {
+  // OpenRouter (OpenAI-compatible). Default: cheapest recent DeepSeek flash model (2026-11: $0.045/M in, $0.50/M out).
+  openrouter: {
+    model: ENV.OPENROUTER_MODEL || 'deepseek/deepseek-v4.1-flash',
+    request: (model, system, user) => ({
+      url: 'https://openrouter.ai/api/v1/chat/completions',
+      headers: { Authorization: `Bearer ${ENV.OPENROUTER_API_KEY}`, 'X-Title': 'Leash' },
+      body: {
+        model,
+        max_tokens: MAX_TOKENS,
+        response_format: { type: 'json_object' },
+        usage: { include: true }, // returns exact USD cost per call
+        messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+      },
+    }),
+    parse: (b) => ({
+      text: b.choices?.[0]?.message?.content || '',
+      usage: { input_tokens: b.usage?.prompt_tokens || 0, output_tokens: b.usage?.completion_tokens || 0, cost_usd: b.usage?.cost },
+    }),
+  },
   claude: {
     model: ENV.ANTHROPIC_MODEL || 'claude-haiku-5-5',
     request: (model, system, user) => ({

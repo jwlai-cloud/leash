@@ -23,7 +23,9 @@ test('settle swaps reservation for real usage and persists across restarts', () 
   assert.equal(b.status().spentUsd, 1);
   b.settle(b.reserve(3, 1)); // unbilled call releases its reservation
   assert.equal(b.status().spentUsd, 1);
+  b.settle(b.reserve(3, 1), { input_tokens: 1, output_tokens: 1, cost_usd: 0.25 }); // provider-billed cost wins over estimate
+  assert.equal(b.status().spentUsd, 1.25);
   const reloaded = make(file);
-  assert.equal(reloaded.status().spentUsd, 1);
-  assert.equal(reloaded.status().calls, 1);
+  assert.equal(reloaded.status().spentUsd, 1.25);
+  assert.equal(reloaded.status().calls, 2);
 });

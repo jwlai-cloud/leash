@@ -27,7 +27,7 @@ Works with **zero keys** (badges show `AI: rules`, `PayPal: simulated`). For the
 
 | Env var | Where to get it | Without it |
 |---|---|---|
-| `ANTHROPIC_API_KEY` **or** `GEMINI_API_KEY` | console.anthropic.com / aistudio.google.com | rule-based agent + regex guard |
+| `OPENROUTER_API_KEY` (recommended) **or** `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` | openrouter.ai/keys · console.anthropic.com · aistudio.google.com | rule-based agent + regex guard |
 | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` | developer.paypal.com → Apps & Credentials → **Sandbox** | simulated orders |
 
 Pay with a sandbox **personal** account (developer.paypal.com → Sandbox accounts).
@@ -43,11 +43,11 @@ Pay with a sandbox **personal** account (developer.paypal.com → Sandbox accoun
 The red-team toggle makes the agent treat listing text as instructions — a common real-world agent bug — so you can watch the guard catch a successful hijack.
 
 ## AI spend cap (dev/testing)
-Model calls are hard-capped at **$20** by default (`AI_BUDGET_USD`). Before each call Leash reserves worst-case cost; after it records real token usage to `.ai-usage.json` (survives restarts). At the cap, the app falls back to rules instead of calling the model. Delete `.ai-usage.json` to reset. **Also set a provider-side limit** (Anthropic Console spend limit / Google Cloud billing budget for the Gemini key). The app cap can't protect a key used somewhere else. See [ADR 0002](docs/adr/0002-ai-spend-cap.md).
+Model calls are hard-capped at **$20** by default (`AI_BUDGET_USD`). Before each call Leash reserves worst-case cost; after it records real token usage to `.ai-usage.json` (survives restarts). At the cap, the app falls back to rules instead of calling the model. Delete `.ai-usage.json` to reset. **Also set a provider-side limit** (OpenRouter key credit limit / Anthropic Console spend limit / Google Cloud billing budget). The app cap can't protect a key used somewhere else. See [ADR 0002](docs/adr/0002-ai-spend-cap.md).
 
 ## Tools used
 - **PayPal:** Orders v2 REST API (OAuth2 client credentials, create order with itemized breakdown + `custom_id`, capture, `PayPal-Request-Id` idempotency), PayPal JS SDK Buttons. Sandbox environment.
-- **AI:** Anthropic Claude (Messages API, default `claude-haiku-5-5`) **or** Google Gemini (`generateContent`, JSON mode, default `gemini-3.5-flash-lite`), picked by whichever key is set or `AI_PROVIDER`. Used in two roles: the shopping **agent** and an independent **guard** that scans for injections and judges intent drift. Model output is schema-validated server-side; AI can only add risk, never override a deterministic block.
+- **AI:** DeepSeek V4.1 Flash via **OpenRouter** (default; ~$0.0003 per shopping request, exact billed cost tracked per call), **or** Anthropic Claude (Messages API, default `claude-haiku-5-5`), **or** Google Gemini (`generateContent`, JSON mode, default `gemini-3.5-flash-lite`), picked by whichever key is set or `AI_PROVIDER`. Used in two roles: the shopping **agent** and an independent **guard** that scans for injections and judges intent drift. Model output is schema-validated server-side; AI can only add risk, never override a deterministic block.
 - Node 22, Express, vanilla HTML. No build step.
 
 ## Tests

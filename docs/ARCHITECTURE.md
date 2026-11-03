@@ -4,8 +4,8 @@
  Browser (public/index.html)
    │  1. POST /api/shop {request, redTeam}
    ▼
- server.js ──► src/ai.js  agentPlan()      Claude/Gemini (or rules)  → proposed cart
-          ──► src/ai.js  guardScan()       Claude/Gemini (or regex)       → injected SKUs, intent drift
+ server.js ──► src/ai.js  agentPlan()      LLM (or rules)  → proposed cart
+          ──► src/ai.js  guardScan()       LLM (or regex)       → injected SKUs, intent drift
           ──► src/policy.js evaluate()     deterministic           → APPROVE | ESCALATE | BLOCK
           stores decision {id, cart, verdict} in memory
    │  2. PayPal button → POST /api/orders {decisionId, confirm}
@@ -21,7 +21,7 @@
 | File | Role |
 |------|------|
 | `server.js` | Express routes, in-memory decisions + ledger, rate limit on AI route |
-| `src/ai.js` | Agent + guard via Claude Messages API or Gemini generateContent (one `llm()` with per-provider request/parse); schema validation; deterministic fallbacks |
+| `src/ai.js` | Agent + guard via OpenRouter (DeepSeek), Claude Messages API, Gemini generateContent or Vertex AI (one `llm()` with per-provider request/parse); schema validation; deterministic fallbacks |
 | `src/budget.js` | $20 dev/test model spend cap: reserve worst case before call, record real usage after, persisted to `.ai-usage.json` |
 | `src/policy.js` | Pure policy engine. Always runs. AI signals can only add risk. |
 | `src/paypal.js` | OAuth2 client-credentials, Orders v2 create/capture; simulated mode without creds |
@@ -35,7 +35,7 @@
 - Model output is untrusted: SKUs must exist in catalog, qty integer 1–20, otherwise dropped.
 
 ## Modes
-Badges in the UI: `AI: claude|gemini|rules`, `PayPal: sandbox|simulated`. Set by env presence (see `.env.example`).
+Badges in the UI: `AI: openrouter|claude|gemini|vertex|rules`, `PayPal: sandbox|simulated`. Set by env presence (see `.env.example`).
 
 ## Acceptance criteria (MVP)
 1. "Get flowers for mom under $60" → APPROVE → PayPal order → capture → ledger shows spend.

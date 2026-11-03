@@ -25,7 +25,9 @@ export function createBudget({ file, limitUsd, pricePerMTokIn, pricePerMTokOut }
       const i = usage.input_tokens || 0, o = usage.output_tokens || 0;
       state.inputTokens += i; state.outputTokens += o;
       if (i || o) state.calls += 1;
-      state.spentUsd = round(Math.max(0, state.spentUsd - reserved + cost(i, o)));
+      // Prefer the provider's billed cost (OpenRouter returns it); else estimate from tokens.
+      const actual = Number.isFinite(usage.cost_usd) ? usage.cost_usd : cost(i, o);
+      state.spentUsd = round(Math.max(0, state.spentUsd - reserved + actual));
       save();
     },
     status: () => ({ ...state, limitUsd, exhausted: state.spentUsd >= limitUsd }),

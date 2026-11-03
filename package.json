@@ -1,7 +1,7 @@
 {
   "name": "leash",
   "version": "0.1.0",
-  "description": "Spend firewall for AI shopping agents, built on PayPal Orders v2 + Claude",
+  "description": "Spend firewall for AI shopping agents, built on PayPal Orders v2 + LLM agents",
   "type": "module",
   "license": "MIT",
   "engines": {
