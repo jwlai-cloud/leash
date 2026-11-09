@@ -9,13 +9,17 @@
 - `npm test` 16/16. `npm run smoke` 2/2 against real APIs (twice).
 - Real sandbox checkout through the UI: order 0GT57263JN2666825, capture 18325377M69774702, $28.41 COMPLETED; `custom_id` carries decision + mandate hash (checked via PayPal API).
 
+- Agent framework + leashed PayPal Agent Toolkit ([ADR 0006](adr/0006-agent-framework-and-paypal-agent-toolkit.md)): real sandbox `get_order` and `create_refund` (refund 5N1574911Y9259208) verified; second refund refused by Leash. Independent seller agents. Webhook endpoint with signature verification. `npm test` 20/20.
+
 ### Not verified yet
+- Full settle flow on a fresh real capture through the UI (shipping on Orders v2 `/track`).
+- Webhooks on a public URL (needs Render + `PAYPAL_WEBHOOK_ID`).
 - **Payee routing.** `SELLER_SANDBOX_EMAILS` is not set yet, so payments go to the app's own sandbox merchant.
 - Mobile layout of the new UI.
 
 ### Next (priority order)
 1. Owner: create 2–3 sandbox business accounts and set `SELLER_SANDBOX_EMAILS` (payee routing).
-2. Public GitHub repo (owner OK needed), deploy to Render with keys.
+2. Deploy to Render; register the webhook URL; set `PAYPAL_WEBHOOK_ID`. (Public repo done: github.com/jwlai-cloud/leash.)
 3. Record the video from [DEMO_SCRIPT.md](DEMO_SCRIPT.md) (update for the negotiation floor); upload to YouTube early.
 4. Devpost write-up from [SUBMISSION.md](SUBMISSION.md) (update for the pivot); select Channel3 and Render as sponsor tools. Deadline Thu 12 Nov, 12:00 PST.
 

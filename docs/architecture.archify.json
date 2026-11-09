@@ -1,0 +1,300 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Leash agent architecture",
+    "subtitle": "Hub and spoke: every agent message passes through Leash; money moves only after code-only checks",
+    "output": "architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "money-path",
+        "label": "Money path",
+        "focus": [
+          "ui",
+          "hub",
+          "policy",
+          "paypal",
+          "seller-acct"
+        ],
+        "note": "A request becomes a signed mandate, a checked deal, and a PayPal capture paid to the winning seller."
+      },
+      {
+        "id": "agents",
+        "label": "Agents around the hub",
+        "focus": [
+          "hub",
+          "buyer",
+          "sellers",
+          "screener"
+        ],
+        "note": "Sellers never reach the buyer directly: the screener clears every message first."
+      },
+      {
+        "id": "outside",
+        "label": "Outside services",
+        "focus": [
+          "hub",
+          "channel3",
+          "openrouter"
+        ],
+        "note": "Real products from Channel3; all agent reasoning from DeepSeek via OpenRouter."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Price pit UI",
+      "sublabel": "browser \u00b7 live stream",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "hub",
+      "type": "backend",
+      "label": "Leash orchestrator",
+      "sublabel": "negotiate.js \u00b7 Express",
+      "pos": [
+        280,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "the hub"
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Mandate + policy",
+      "sublabel": "Ed25519 \u00b7 code only",
+      "pos": [
+        540,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "paypal",
+      "type": "external",
+      "label": "PayPal Orders v2",
+      "sublabel": "sandbox \u00b7 JS SDK",
+      "pos": [
+        790,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "seller-acct",
+      "type": "external",
+      "label": "Seller PayPal",
+      "sublabel": "winning seller paid",
+      "pos": [
+        1040,
+        300
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "buyer",
+      "type": "backend",
+      "label": "Buyer agent",
+      "sublabel": "picks, counters",
+      "pos": [
+        190,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sellers",
+      "type": "backend",
+      "label": "Seller agents",
+      "sublabel": "one per retailer",
+      "pos": [
+        420,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "tag": "private floors"
+    },
+    {
+      "id": "screener",
+      "type": "security",
+      "label": "Screener",
+      "sublabel": "LLM + regex",
+      "pos": [
+        650,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "channel3",
+      "type": "external",
+      "label": "Channel3",
+      "sublabel": "real products",
+      "pos": [
+        190,
+        490
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "openrouter",
+      "type": "cloud",
+      "label": "OpenRouter",
+      "sublabel": "DeepSeek V4.1 Flash",
+      "pos": [
+        420,
+        490
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Leash server \u00b7 Node 22",
+      "wraps": [
+        "hub",
+        "policy",
+        "buyer",
+        "sellers",
+        "screener"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ask",
+      "from": "ui",
+      "to": "hub",
+      "label": "request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deal",
+      "from": "hub",
+      "to": "policy",
+      "label": "deal",
+      "variant": "emphasis"
+    },
+    {
+      "id": "order",
+      "from": "policy",
+      "to": "paypal",
+      "label": "approved",
+      "variant": "emphasis"
+    },
+    {
+      "id": "capture",
+      "from": "paypal",
+      "to": "seller-acct",
+      "label": "capture"
+    },
+    {
+      "id": "to-buyer",
+      "from": "hub",
+      "to": "buyer",
+      "label": "cleared offers",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "offers",
+      "from": "sellers",
+      "to": "screener",
+      "label": "offers"
+    },
+    {
+      "id": "cleared",
+      "from": "screener",
+      "to": "hub",
+      "label": "safe only",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "search",
+      "from": "hub",
+      "to": "channel3",
+      "label": "search",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "llm",
+      "from": "hub",
+      "to": "openrouter",
+      "label": "LLM calls",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Agents (LLM)",
+      "items": [
+        "Buyer agent picks a product and counters",
+        "Seller agents pitch and reply for real listings",
+        "Screener and intent check guard the floor"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Code only, never AI",
+      "items": [
+        "Every price and seller floor",
+        "Mandate signing and verification",
+        "Final policy verdict before PayPal"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Stack",
+      "items": [
+        "Node 22 + Express, no agent framework",
+        "PayPal Orders v2 + JS SDK, Channel3 REST",
+        "$20 AI spend cap, server-sent events"
+      ]
+    }
+  ]
+}

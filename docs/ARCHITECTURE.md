@@ -17,7 +17,15 @@
    ▼
  src/paypal.js createOrder   Orders v2 sandbox; payee = winning seller's sandbox account; custom_id = decision:mandate-hash
    │ buyer approves in PayPal popup → POST /api/orders/:id/capture → ledger
+   ▼
+ POST /api/orders/:id/settle (stream)   src/settle.js
+                seller agent → add_order_tracking (Leash tool, Orders v2 /track)   ┐ every call through
+                buyer agent  → get_order          (PayPal Agent Toolkit)           ├ src/leash-tools.js
+ POST /api/orders/:id/refund (stream)   buyer agent → create_refund (Toolkit)    ┘ checkToolCall
+ POST /api/paypal/webhook               verified with PayPal verify-webhook-signature
 ```
+
+Visual version: [architecture.html](architecture.html) (Archify, spec in `architecture.archify.json`).
 
 ## Components
 | File | Role |
@@ -26,6 +34,9 @@
 | `src/negotiate.js` | The negotiation floor. Async generator of events. All prices computed here. |
 | `src/mandate.js` | Parse cap, sign/verify mandate (Ed25519, key in `.leash-mandate-key.pem`) |
 | `src/channel3.js` | Channel3 `/v1/search`, normalise, disk cache `.channel3-cache.json`, snapshot fallback |
+| `src/agents.js` | Agent runtime: Vercel AI SDK 4 + OpenRouter; budget-charged; rules fallback that never repeats a tool call |
+| `src/leash-tools.js` | PayPal Agent Toolkit tools (`get_order`, `create_refund`) + Leash `add_order_tracking`, each wrapped by `checkToolCall` |
+| `src/settle.js` | After payment: seller ships, buyer verifies; refund on request |
 | `src/ai.js` | LLM providers (OpenRouter default, Claude, Gemini, Vertex), `ask` with rules fallback, `screenMessages`, `checkDrift` |
 | `src/budget.js` | $20 AI spend cap: reserve worst case, settle with billed cost |
 | `src/policy.js` | Pure policy: mandate cap/expiry/never-list, house caps, budget, injected items, drift |
@@ -38,7 +49,9 @@
 - **Seller messages:** screened before the buyer agent reads them. Flagged sellers are removed from the floor.
 - **Client:** never sends a cart or price. Orders are built from the stored decision. `BLOCK` cannot become an order; `ESCALATE` needs `confirm:true`. Policy re-runs at order and capture.
 - **Model output:** schema-checked, IDs whitelisted, drift fails closed.
-- **Floors:** never sent to the browser.
+- **Floors:** never sent to the browser. Each seller agent sees only its own floor.
+- **Agent tools:** every PayPal tool call is checked before it runs; refusals never reach PayPal and are shown in the UI.
+- **Webhooks:** ignored unless PayPal verifies the signature.
 
 ## Modes (badges in header)
 AI model or `rules`, `Channel3 live` or `snapshot`, `PayPal sandbox` or `simulated`. Set by env (see `.env.example`).

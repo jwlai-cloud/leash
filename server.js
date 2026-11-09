@@ -5,7 +5,10 @@ import { aiMode, aiModel, aiBudget } from './src/ai.js';
 import { negotiate } from './src/negotiate.js';
 import { productsMode } from './src/channel3.js';
 import { verifyMandate, publicKeyPem } from './src/mandate.js';
-import { createOrder, captureOrder, paypalMode, paypalClientId, payeeFor } from './src/paypal.js';
+import { createOrder, captureOrder, paypalMode, paypalClientId, payeeFor, verifyWebhook, webhookId } from './src/paypal.js';
+import { settle, refund } from './src/settle.js';
+import { agentRuntime } from './src/agents.js';
+import { toolkitMode } from './src/leash-tools.js';
 
 // ponytail: in-memory state, single demo user. Restart = reset. SQLite if multi-user ever matters.
 let policy = { ...DEFAULT_POLICY };
@@ -18,8 +21,31 @@ let pendingUsd = 0; // captures in flight, so parallel captures can't jointly ov
 const recheck = (d) => evaluate({ cart: d.cart, policy, spentThisMonth: spent() + pendingUsd, signals: d.signals, mandate: d.mandate });
 
 const app = express();
+const webhooks = []; // last verified PayPal events, newest first
+
+// PayPal webhooks: mounted before the small global JSON limit; trusted only after PayPal verifies the signature.
+app.post('/api/paypal/webhook', express.json({ limit: '200kb' }), async (req, res) => {
+  let ok = false;
+  try { ok = await verifyWebhook(req.headers, req.body); } catch (e) { console.warn('webhook verify failed:', e.message); }
+  if (!ok) return res.status(400).json({ error: 'Signature not verified.' });
+  const ev = req.body;
+  const r = ev.resource || {};
+  const orderId = r.supplementary_data?.related_ids?.order_id || null;
+  webhooks.unshift({ at: new Date().toISOString(), type: ev.event_type, id: ev.id, resourceId: r.id, orderId, status: r.status });
+  webhooks.length = Math.min(webhooks.length, 50);
+  const d = decisions.get(orders.get(orderId));
+  if (d) (d.webhooks ||= []).push(ev.event_type);
+  res.sendStatus(200); // any 2xx stops PayPal retrying
+});
+app.get('/api/webhooks', (_req, res) => res.json({ configured: Boolean(webhookId), events: webhooks.slice(0, 20) }));
+
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static('public'));
+
+const stream = (res) => {
+  res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
+  return (e) => res.write(`data: ${JSON.stringify(e)}\n\n`);
+};
 
 // ponytail: best-effort per-IP limiter on the paid AI route; set a provider spend cap too.
 const hits = new Map();
@@ -32,7 +58,7 @@ const limit = (req, res, next) => {
 };
 
 app.get('/api/config', (_req, res) =>
-  res.json({ aiMode, aiModel, aiBudget: aiBudget.status(), productsMode, paypalMode, paypalClientId, policy, spent: spent() }));
+  res.json({ aiMode, aiModel, aiBudget: aiBudget.status(), agentRuntime, toolkitMode, productsMode, paypalMode, paypalClientId, webhooks: Boolean(webhookId), policy, spent: spent() }));
 
 app.put('/api/policy', (req, res) => {
   const b = req.body || {};
@@ -50,8 +76,7 @@ app.put('/api/policy', (req, res) => {
 app.post('/api/negotiate', limit, async (req, res) => {
   const request = String(req.body?.request || '').trim().slice(0, 300);
   if (!request) return res.status(400).json({ error: 'Tell your agent what to buy.' });
-  res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
-  const send = (e) => res.write(`data: ${JSON.stringify(e)}\n\n`);
+  const send = stream(res);
   const t0 = Date.now();
   try {
     for await (const e of negotiate({ request, includeScam: req.body?.includeScam !== false, policy, spentThisMonth: spent() + pendingUsd })) {
@@ -105,8 +130,9 @@ app.post('/api/orders/:id/capture', async (req, res) => {
   try {
     const cap = await captureOrder(req.params.id);
     if (cap.status !== 'COMPLETED') return res.status(402).json({ error: `Capture status ${cap.status}` });
-    d.captured = { id: cap.id, status: cap.status, payer: cap.payer?.email_address || null };
-    ledger.unshift({ at: new Date().toISOString(), decisionId: d.id, orderId: cap.id, amount: d.total, items: d.cart.map((i) => `${i.qty}× ${i.name}`).join(', '), verdict: d.verdict });
+    const captureId = cap.purchase_units?.[0]?.payments?.captures?.[0]?.id || null;
+    d.captured = { id: cap.id, captureId, status: cap.status, payer: cap.payer?.email_address || null };
+    ledger.unshift({ at: new Date().toISOString(), decisionId: d.id, orderId: cap.id, captureId, amount: d.total, items: d.cart.map((i) => `${i.qty}× ${i.name}`).join(', '), verdict: d.verdict });
     res.json(d.captured);
   } catch (e) {
     res.status(502).json({ error: e.message });
@@ -114,6 +140,37 @@ app.post('/api/orders/:id/capture', async (req, res) => {
     d.capturing = false;
     pendingUsd -= d.total;
   }
+});
+
+// The paid deal as the toolkit leash sees it.
+const paidOrder = (d) => (d.paid ||= { orderId: d.orderId, captureId: d.captured.captureId, total: d.total, seller: d.cart[0]?.merchant, refunded: 0 });
+
+// After capture: seller agent ships, buyer agent verifies, both via the leashed PayPal Agent Toolkit.
+app.post('/api/orders/:id/settle', limit, async (req, res) => {
+  const d = decisions.get(orders.get(req.params.id));
+  if (!d?.captured?.captureId) return res.status(404).json({ error: 'No captured Leash order.' });
+  if (d.settled) return res.status(409).json({ error: 'Already settled.' });
+  d.settled = true;
+  const send = stream(res);
+  try { for await (const e of settle(paidOrder(d))) send(e); } catch (e) { console.error('settle failed:', e); send({ type: 'error', message: e.message }); }
+  res.end();
+});
+
+// "Pull the leash": your agent asks PayPal for your money back, within what Leash allows.
+app.post('/api/orders/:id/refund', limit, async (req, res) => {
+  const d = decisions.get(orders.get(req.params.id));
+  if (!d?.captured?.captureId) return res.status(404).json({ error: 'No captured Leash order.' });
+  if (d.refunding) return res.status(409).json({ error: 'Refund already in progress.' });
+  d.refunding = true;
+  const send = stream(res);
+  try {
+    for await (const e of refund(paidOrder(d), String(req.body?.reason || '').slice(0, 200))) {
+      if (e.type === 'refunded' && e.ok) ledger.unshift({ at: new Date().toISOString(), decisionId: d.id, orderId: d.orderId, amount: -e.amount, items: `Refund · ${d.cart[0]?.name || ''}`, verdict: 'REFUND' });
+      send(e);
+    }
+  } catch (e) { console.error('refund failed:', e); send({ type: 'error', message: e.message }); }
+  finally { d.refunding = false; }
+  res.end();
 });
 
 app.get('/api/ledger', (_req, res) => res.json({ spent: spent(), budget: policy.monthlyBudget, entries: ledger }));

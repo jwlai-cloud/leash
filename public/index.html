@@ -169,9 +169,10 @@ let cfg, st, sdk, shown = null;
 async function init() {
   cfg = await api('/api/config');
   $('modes').replaceChildren(
-    h('b', {}, cfg.aiModel || 'rules (no AI key)'), ' · ',
+    h('b', {}, cfg.agentRuntime || cfg.aiModel || 'rules (no AI key)'), ' · ',
     h('b', {}, cfg.productsMode === 'channel3' ? 'Channel3 live' : 'Channel3 snapshot'), ' · ',
-    h('b', {}, cfg.paypalMode === 'sandbox' ? 'PayPal sandbox' : 'PayPal simulated'));
+    h('b', {}, cfg.paypalMode === 'sandbox' ? 'PayPal sandbox' : 'PayPal simulated'), ' · ',
+    h('b', {}, cfg.toolkitMode === 'paypal-agent-toolkit' ? 'PayPal Agent Toolkit' : 'toolkit simulated'));
   $('chips').replaceChildren(...EXAMPLES.map((t) => {
     const b = h('button', { type: 'button' }, t.replace(/, under .*/, ''));
     b.onclick = () => { $('req').value = t; $('req').focus(); };
@@ -223,6 +224,50 @@ function drawChart() {
 function feed(cls, from, sub, text, amt) {
   $('feed').append(h('li', { class: cls }, h('div', { class: 'from' }, from, sub ? h('small', {}, sub) : null), h('div', {}, text), h('div', { class: 'amt' }, amt ?? '')));
 }
+// POST, then read server-sent events from the response body.
+async function readStream(path, body, onEvent) {
+  const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let buf = '';
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf('\n\n')) >= 0) {
+      const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+      if (chunk.startsWith('data: ')) onEvent(JSON.parse(chunk.slice(6)));
+    }
+  }
+}
+
+// After-payment events: leashed toolkit calls and the agents' words.
+function onAfter(e) {
+  if (e.type === 'tool') {
+    const label = `${e.via === 'paypal-agent-toolkit' ? 'PayPal Agent Toolkit' : e.via} · ${e.tool}`;
+    feed(e.allowed ? 'agent' : 'bad', e.allowed ? 'Leash allowed' : 'Leash blocked', label, e.allowed ? (e.result || '').slice(0, 160) : e.reason);
+    $('wire').append(h('li', {}, h('b', {}, e.allowed ? 'allow' : 'BLOCK'), ` ${label} ${JSON.stringify(e.args)}`));
+  }
+  if (e.type === 'agent') feed('', e.who, e.role === 'seller' ? 'seller agent' : 'buyer agent', e.text);
+  if (e.type === 'refunded' && e.ok) { $('payMsg').textContent = `Refunded ${usd(e.amount)} through PayPal.`; refreshSpent(); }
+  if (e.type === 'error') feed('bad', 'Error', '', e.message);
+}
+
+// Show PayPal's own signed confirmation (verified webhook) when it arrives. Polls for ~1 minute.
+async function watchWebhooks(orderID) {
+  if (!cfg.webhooks) return;
+  const seen = new Set();
+  for (let i = 0; i < 20; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const w = await api('/api/webhooks').catch(() => ({ events: [] }));
+    for (const e of w.events.filter((x) => x.orderId === orderID && !seen.has(x.id))) {
+      seen.add(e.id);
+      feed('agent', 'PayPal webhook', 'signature verified', `${e.type} · ${e.resourceId}`);
+    }
+  }
+}
+
 const bestClean = () => Math.min(...Object.values(st.sellers).filter((x) => !x.removed && !x.scam).map((x) => x.points.at(-1).price));
 
 $('form').onsubmit = async (ev) => {
@@ -238,20 +283,7 @@ $('form').onsubmit = async (ev) => {
   ['removed', 'checkBox', 'sig'].forEach((id) => $(id).classList.add('hidden'));
   $('go').disabled = true; $('go').textContent = 'Haggling…';
   try {
-    const res = await fetch('/api/negotiate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ request, includeScam: $('scam').checked }) });
-    if (!res.ok) throw new Error((await res.json()).error || res.statusText);
-    const reader = res.body.getReader(), dec = new TextDecoder();
-    let buf = '';
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      let i;
-      while ((i = buf.indexOf('\n\n')) >= 0) {
-        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
-        if (chunk.startsWith('data: ')) on(JSON.parse(chunk.slice(6)));
-      }
-    }
+    await readStream('/api/negotiate', { request, includeScam: $('scam').checked }, on);
   } catch (e) { $('dealMeta').replaceChildren(h('span', { class: 'err' }, e.message)); }
   finally { $('go').disabled = false; $('go').textContent = 'Haggle for me'; }
 };
@@ -325,6 +357,15 @@ async function mountPay(v, confirm) {
     $('payMsg').textContent = `Paid ${usd(v.total)} · PayPal order ${cap.id} · ${cap.status}`;
     feed('agent', 'PayPal', 'settled', `Captured ${usd(v.total)}. Order ${cap.id}, mandate hash attached.`, usd(v.total));
     refreshSpent();
+    try { await readStream(`/api/orders/${encodeURIComponent(orderID)}/settle`, {}, onAfter); } catch (e) { fail(e); }
+    watchWebhooks(orderID);
+    const pull = h('button', { class: 'sim', type: 'button' }, 'Pull the leash · refund');
+    pull.onclick = async () => {
+      pull.disabled = true;
+      try { await readStream(`/api/orders/${encodeURIComponent(orderID)}/refund`, { reason: 'Changed my mind' }, onAfter); } catch (e) { fail(e); }
+      pull.disabled = false; pull.textContent = 'Try refunding again';
+    };
+    $('payGate').append(pull);
   };
   if (cfg.paypalMode !== 'sandbox') {
     const b = h('button', { class: 'sim', type: 'button' }, `Pay ${usd(v.total)} with PayPal (simulated)`);

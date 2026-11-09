@@ -66,6 +66,34 @@ export async function createOrder(decision) {
 }
 
 export async function captureOrder(orderId) {
-  if (paypalMode === 'simulated') return { id: orderId, status: 'COMPLETED', payer: { email_address: 'simulated-buyer@example.com' } };
+  if (paypalMode === 'simulated') return { id: orderId, status: 'COMPLETED', payer: { email_address: 'simulated-buyer@example.com' },
+    purchase_units: [{ payments: { captures: [{ id: `SIMCAP-${randomUUID().slice(0, 8).toUpperCase()}`, status: 'COMPLETED' }] } }] };
   return call(`/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`, null, `capture-${orderId}`);
+}
+
+// Orders v2 tracking. (The Agent Toolkit's create_shipment_tracking uses the older
+// /v1/shipping/trackers-batch API, which a standard sandbox REST app is NOT_AUTHORIZED for.)
+export async function addTracking({ orderId, captureId, trackingNumber, carrier }) {
+  if (paypalMode === 'simulated') return { id: orderId, status: 'COMPLETED', tracking_number: trackingNumber, simulated: true };
+  return call(`/v2/checkout/orders/${encodeURIComponent(orderId)}/track`,
+    { capture_id: captureId, tracking_number: trackingNumber, carrier, notify_payer: false }, `track-${orderId}-${trackingNumber}`);
+}
+
+// Webhooks: PayPal signs every event. We ask PayPal to verify the signature before trusting it.
+// PAYPAL_WEBHOOK_ID comes from the app's Webhooks section in the developer dashboard.
+export const webhookId = process.env.PAYPAL_WEBHOOK_ID || null;
+export async function verifyWebhook(headers, event) {
+  if (!webhookId || paypalMode === 'simulated') return false;
+  const h = (k) => headers[k] || headers[k.toLowerCase()];
+  const res = await fetch(`${API}/v1/notifications/verify-webhook-signature`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${await accessToken()}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      auth_algo: h('paypal-auth-algo'), cert_url: h('paypal-cert-url'), transmission_id: h('paypal-transmission-id'),
+      transmission_sig: h('paypal-transmission-sig'), transmission_time: h('paypal-transmission-time'),
+      webhook_id: webhookId, webhook_event: event,
+    }),
+  });
+  if (!res.ok) return false;
+  return (await res.json()).verification_status === 'SUCCESS';
 }

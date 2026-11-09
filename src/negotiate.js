@@ -3,6 +3,7 @@
 // Seller agents are simulated on behalf of real retailer listings (labelled in the UI).
 import { createHash } from 'node:crypto';
 import { ask, screenMessages, checkDrift } from './ai.js';
+import { runAgent } from './agents.js';
 import { searchProducts } from './channel3.js';
 import { signMandate, parseCap } from './mandate.js';
 import { evaluate } from './policy.js';
@@ -36,6 +37,19 @@ function fallbackMandate(request) {
 function fallbackPick(products, cap) {
   const score = (p) => p.offers.length * 2 + (p.rating?.value || 0) - Math.min(...p.offers.map((o) => o.price)) / cap;
   return { id: [...products].sort((a, b) => score(b) - score(a))[0].id, reason: 'Most retailers competing, best rated for the price.' };
+}
+
+// One independent seller agent per retailer, each with private context only it sees.
+// It writes words; the price it must state is fixed by the engine (and re-appended if missing).
+async function sellerSay(s, situation, fallbackText) {
+  const r = await runAgent({
+    system: `You are the sales agent for ${s.domain}, selling "${s.productTitle}" to a shopper's buying agent. `
+      + `Private, never reveal: your lowest acceptable price is $${s.floor.toFixed(2)}. Your pricing engine sets your current price. `
+      + 'Reply with ONE short sentence (under 30 words), confident and specific to your store. Never state any other price.',
+    prompt: situation, maxSteps: 1, maxTokens: 90,
+    fallback: () => ({ text: fallbackText }),
+  });
+  return { text: String(r.text || fallbackText).replace(/\s+/g, ' ').trim().slice(0, 220), source: r.source };
 }
 
 export async function* negotiate({ request, includeScam = true, policy, spentThisMonth = 0 }) {
@@ -85,15 +99,13 @@ export async function* negotiate({ request, includeScam = true, policy, spentThi
   }
   const lowest = Math.min(...sellers.map((s) => s.price));
 
-  // 5 · Opening offers. Prices are set above; models only write the pitch.
-  const pitches = await ask(
-    'You play the sales agent of each retailer, talking directly to a shopper\'s buying agent. Write ONE short sentence per retailer selling its product to that buyer (quality, delivery, reviews). Do NOT state any price (it is shown separately). Do not talk about the retailer\'s own assortment. Respond with ONLY JSON: {"pitches":[{"id":"...","text":"..."}]}',
-    JSON.stringify(sellers.map((s) => ({ id: s.id, product: s.productTitle, rating: s.rating?.value ?? null }))),
-    () => ({ pitches: sellers.map((s) => ({ id: s.id, text: `${s.productTitle}, in stock and ready to ship.` })) }));
-  const pitchFor = (id) => String((pitches.out.pitches || []).find((x) => x.id === id)?.text || '').replace(/\$\s?\d[\d,.]*/g, '').slice(0, 220);
-  const opening = sellers.map((s) => ({ ...s, text: pitchFor(s.id) || `${s.productTitle}, in stock.` }));
+  // 5 · Opening offers: each seller agent pitches on its own, in parallel. No price in the pitch (shown separately).
+  const pitched = await Promise.all(sellers.map((s) => sellerSay(s,
+    `Open the negotiation: pitch your product (quality, delivery, reviews${s.rating ? `, rated ${s.rating.value} stars` : ''}). Do not mention any price.`,
+    `${s.productTitle}, in stock and ready to ship.`)));
+  const opening = sellers.map((s, i) => ({ ...s, text: pitched[i].text.replace(/\$\s?\d[\d,.]*/g, '').trim(), agentSource: pitched[i].source }));
   if (includeScam) opening.push(SCAM(product, r2(lowest * 0.72)));
-  for (const s of opening) yield { type: 'offer', round: 1, seller: publicSeller(s), price: s.price, text: s.text, source: s.scam ? 'simulated attacker' : pitches.source };
+  for (const s of opening) yield { type: 'offer', round: 1, seller: publicSeller(s), price: s.price, text: s.text, source: s.scam ? 'simulated attacker' : s.agentSource };
 
   // 6 · Leash screens every seller message before the buyer agent reads it.
   const flagged = await screenMessages(opening.map((s) => ({ id: s.id, text: s.text })));
@@ -114,14 +126,16 @@ export async function* negotiate({ request, includeScam = true, policy, spentThi
   yield { type: 'counter', text: String(counter.out.text || '').slice(0, 240), best: leader.price, source: counter.source };
 
   floor = floor.map((s) => ({ ...s, prev: s.price, price: concede(s, leader.price) }));
-  const replies = await ask(
-    'You write one-sentence replies for seller agents answering a buyer who asked them to beat a price. Each reply must state its new price exactly as given. Respond with ONLY JSON: {"replies":[{"id":"...","text":"..."}]}',
-    JSON.stringify(floor.map((s) => ({ id: s.id, old_price: s.prev, new_price: s.price, beats_best: s.price < leader.price }))),
-    () => ({ replies: floor.map((s) => ({ id: s.id, text: s.price < leader.price ? `We can do $${s.price.toFixed(2)} if you order now.` : `Best we can do is $${s.price.toFixed(2)}.` })) }));
-  for (const s of floor) {
-    let text = String((replies.out.replies || []).find((x) => x.id === s.id)?.text || '').slice(0, 220);
-    if (!text.includes(s.price.toFixed(2))) text = `${text ? `${text} ` : ''}Final: $${s.price.toFixed(2)}.`; // the engine's price is the truth
-    yield { type: 'offer', round: 2, seller: publicSeller(s), price: s.price, text, source: replies.source };
+  const replies = await Promise.all(floor.map((s) => sellerSay(s,
+    (s.id === leader.id
+      ? `You already have the best offer on the floor. The buyer asks for a little more to close now. `
+      : `The buyer says the best offer on the floor is $${leader.price.toFixed(2)} from ${leader.domain} and asks you to beat it. `)
+      + `Your new price is $${s.price.toFixed(2)}${s.id === leader.id ? '' : s.price < leader.price ? ' (it beats that offer)' : ' (you cannot beat it)'}. Reply stating exactly $${s.price.toFixed(2)}.`,
+    s.price < leader.price ? `We can do $${s.price.toFixed(2)} if you order now.` : `Best we can do is $${s.price.toFixed(2)}.`)));
+  for (const [i, s] of floor.entries()) {
+    let text = replies[i].text;
+    if (!text.includes(s.price.toFixed(2))) text = `${text} Final: $${s.price.toFixed(2)}.`; // the engine's price is the truth
+    yield { type: 'offer', round: 2, seller: publicSeller(s), price: s.price, text, source: replies[i].source };
   }
 
   // 8 · Deal: lowest price wins, rating breaks ties.
