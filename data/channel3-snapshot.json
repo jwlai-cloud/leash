@@ -1,0 +1,627 @@
+[
+ {
+  "id": "PKGIqrL",
+  "title": "Beginner Drawing & Sketching Set",
+  "description": "This comprehensive Beginner Drawing & Sketching Set by Artist's Loft is designed for aspiring artists, providing all the essential tools to learn and practice various drawing and shading techniques. The 22-piece kit includes a variety of graphite sketching pencils, charcoal pencils and sticks, and a range of accessories such as erasers, blending tools, and a view finder.",
+  "brands": [
+   {
+    "id": "nAzN",
+    "name": "Artist's Loft"
+   }
+  ],
+  "images": [
+   {
+    "url": "https://cdn.trychannel3.com/155f350c-43b5-4f75-aa79-7324e843a530?aid=01M6ZAG1032AG10EC8Q1543B87&mid=cBzV",
+    "cleaned_url": "https://cdn.trychannel3.com/cleaned/v1/155f350c-43b5-4f75-aa79-7324e843a530?aid=01M6ZAG1032AG10EC8Q1543B87&mid=cBzV",
+    "is_main_image": true,
+    "shot_type": "flat_lay",
+    "alt_text": "Flat lay of a beginner drawing and sketching set with pencils and erasers."
+   }
+  ],
+  "category": {
+   "slug": "drawing-painting-kits",
+   "title": "Drawing & Painting Kits",
+   "path": [
+    {
+     "slug": "arts-entertainment",
+     "title": "Arts & Entertainment"
+    },
+    {
+     "slug": "hobbies-creative-arts",
+     "title": "Hobbies & Creative Arts"
+    },
+    {
+     "slug": "arts-crafts",
+     "title": "Arts & Crafts"
+    },
+    {
+     "slug": "art-craft-kits",
+     "title": "Art & Craft Kits"
+    },
+    {
+     "slug": "drawing-painting-kits",
+     "title": "Drawing & Painting Kits"
+    }
+   ],
+   "has_children": false
+  },
+  "gender": null,
+  "age": "adult",
+  "materials": [
+   "graphite",
+   "wood",
+   "charcoal"
+  ],
+  "key_features": [
+   "Includes 22 pieces",
+   "Conforms to ASTM D-4236",
+   "Ideal for learning and practicing drawing and shading techniques",
+   "Comprehensive beginner's toolset"
+  ],
+  "colors": [
+   {
+    "hex": "#226583",
+    "percentage": 0.3001
+   },
+   {
+    "hex": "#194b64",
+    "percentage": 0.1789
+   },
+   {
+    "hex": "#628ea2",
+    "percentage": 0.1542
+   },
+   {
+    "hex": "#092030",
+    "percentage": 0.1526
+   },
+   {
+    "hex": "#080c11",
+    "percentage": 0.1142
+   },
+   {
+    "hex": "#9cb8c0",
+    "percentage": 0.1
+   }
+  ],
+  "offers": [
+   {
+    "url": "https://buy.trychannel3.com/PKGIqrL-cBzV-jTvF3A?o=01M545W0HEPYDPY9QFY1T4VZ7E&aid=01M6ZAG1032AG10EC8Q1543B87",
+    "domain": "michaels.com",
+    "price": {
+     "price": 22.99,
+     "compare_at_price": null,
+     "currency": "USD"
+    },
+    "availability": "InStock",
+    "condition": "new",
+    "max_commission_rate": 0.025,
+    "dimensions": null
+   }
+  ],
+  "variants": null,
+  "structured_attributes": {},
+  "ratings": null
+ },
+ {
+  "id": "bjBRDua",
+  "title": "Do Art Drawing & Sketching Kit",
+  "description": "The Faber-Castell\u00ae Do Art Drawing & Sketching Kit is a comprehensive beginner's set designed for children ages 9 and up to learn the fundamentals of art. The kit includes a variety of professional-grade tools, including four Goldfaber graphite pencils of varying hardness (6B, 2B, HB, 2H), three black pens (brush, bullet, and fine), an eraser, and a sharpener. To facilitate practice, it comes with a 20-page spiral-bound sketchbook, colored drawing paper, vellum paper, and a plastic copy grid. A 20-page illustrated instruction book guides the user through basics such as composition, textures, and smudging. All components are conveniently housed in a plastic zippered storage pouch.",
+  "brands": [
+   {
+    "id": "WD2W",
+    "name": "Faber-Castell"
+   }
+  ],
+  "images": [
+   {
+    "url": "https://cdn.trychannel3.com/f279c8c9-0a9b-47d3-a081-d6329424b4d3?aid=01M6ZAG1032AG10EC8Q1543B87&mid=cBzV",
+    "cleaned_url": "https://cdn.trychannel3.com/cleaned/v1/f279c8c9-0a9b-47d3-a081-d6329424b4d3?aid=01M6ZAG1032AG10EC8Q1543B87&mid=cBzV",
+    "is_main_image": true,
+    "shot_type": "packaging",
+    "alt_text": "Box packaging for Faber-Castell Drawing & Sketching Kit featuring a penguin illustration."
+   }
+  ],
+  "category": {
+   "slug": "drawing-painting-kits",
+   "title": "Drawing & Painting Kits",
+   "path": [
+    {
+     "slug": "arts-entertainment",
+     "title": "Arts & Entertainment"
+    },
+    {
+     "slug": "hobbies-creative-arts",
+     "title": "Hobbies & Creative Arts"
+    },
+    {
+     "slug": "arts-crafts",
+     "title": "Arts & Crafts"
+    },
+    {
+     "slug": "art-craft-kits",
+     "title": "Art & Craft Kits"
+    },
+    {
+     "slug": "drawing-painting-kits",
+     "title": "Drawing & Painting Kits"
+    }
+   ],
+   "has_children": false
+  },
+  "gender": null,
+  "age": "kids",
+  "materials": [],
+  "key_features": [
+   "20-page illustrated instruction book covering basics like composition and textures",
+   "Includes 4 Goldfaber graphite pencils (6B, 2B, HB, 2H)",
+   "Includes 3 black pens (brush, bullet, fine)",
+   "Comes with a 20-page 6\" x 8\" spiral bound sketchbook",
+   "Includes 6 sheets of colored drawing paper and 8 sheets of vellum paper",
+   "Includes eraser, sharpener, and a 6\" x 8\" plastic copy grid",
+   "Packaged in a plastic zippered storage pouch"
+  ],
+  "colors": [
+   {
+    "hex": "#fdfdfd",
+    "percentage": 0.3924
+   },
+   {
+    "hex": "#ed352a",
+    "percentage": 0.197
+   },
+   {
+    "hex": "#616466",
+    "percentage": 0.1773
+   },
+   {
+    "hex": "#d5bbb1",
+    "percentage": 0.1098
+   },
+   {
+    "hex": "#da7659",
+    "percentage": 0.1043
+   }
+  ],
+  "offers": [
+   {
+    "url": "https://buy.trychannel3.com/bjBRDua-cBzV-jTvF3A?o=01M51BH8GD4ZT5YFFD5CCANTT0&aid=01M6ZAG1032AG10EC8Q1543B87",
+    "domain": "michaels.com",
+    "price": {
+     "price": 16.49,
+     "compare_at_price": 21.99,
+     "currency": "USD"
+    },
+    "availability": "InStock",
+    "condition": "new",
+    "max_commission_rate": 0.025,
+    "dimensions": null
+   }
+  ],
+  "variants": null,
+  "structured_attributes": {},
+  "ratings": null
+ },
+ {
+  "id": "EBmt0n0",
+  "title": "Hape Portable Art & Learn Set",
+  "description": "The Hape Portable Art & Learn Set is a comprehensive creative hub designed for children aged 3-10. This all-in-one kit includes a wide array of drawing tools such as 6 washable crayons, 6 washable markers, 6 standard crayons, and 6 pencils, complemented by an eraser and a wiping rag for easy corrections. The set features a magnetic whiteboard with 13 magnetic number pieces to help children learn basic math concepts like counting and sorting. Additionally, it comes with a pre-printed activity paper roll containing coloring pages, mazes, and connect-the-dots to foster problem-solving and fine motor skills. All components are stored in a portable storage case, making it ideal for both home use and travel. The art supplies are non-toxic and washable, ensuring a mess-free experience.",
+  "brands": [
+   {
+    "id": "ZFFs",
+    "name": "Hape"
+   }
+  ],
+  "images": [
+   {
+    "url": "https://cdn.trychannel3.com/005064c8-8ada-4846-be6c-51818adc2605?aid=01M6ZAG1032AG10EC8Q1543B87&mid=jcD4",
+    "cleaned_url": "https://cdn.trychannel3.com/cleaned/v1/005064c8-8ada-4846-be6c-51818adc2605?aid=01M6ZAG1032AG10EC8Q1543B87&mid=jcD4",
+    "is_main_image": true,
+    "shot_type": "packaging",
+    "alt_text": "Open blue box set with art supplies and a rolled paper."
+   }
+  ],
+  "category": {
+   "slug": "drawing-painting-kits",
+   "title": "Drawing & Painting Kits",
+   "path": [
+    {
+     "slug": "arts-entertainment",
+     "title": "Arts & Entertainment"
+    },
+    {
+     "slug": "hobbies-creative-arts",
+     "title": "Hobbies & Creative Arts"
+    },
+    {
+     "slug": "arts-crafts",
+     "title": "Arts & Crafts"
+    },
+    {
+     "slug": "art-craft-kits",
+     "title": "Art & Craft Kits"
+    },
+    {
+     "slug": "drawing-painting-kits",
+     "title": "Drawing & Painting Kits"
+    }
+   ],
+   "has_children": false
+  },
+  "gender": null,
+  "age": "kids",
+  "materials": [
+   "Cotton"
+  ],
+  "key_features": [
+   "ALL-IN-ONE CREATIVE HUB: Includes 6 washable crayons, 6 washable markers, 6 crayons, 6 pencils, 13 magnetic number pieces, a paper roll, an eraser, a wiping rag, and a magnetic whiteboard",
+   "MAGNETIC WHITEBOARD: Interactive surface with number pieces for learning counting and sorting",
+   "ACTIVITY PAPER ROLL: Pre-printed with coloring pages, doodling prompts, maze games, and connect-the-dots",
+   "DIVERSE ART TOOLS: Complete range of drawing instruments for sketching and creative expression",
+   "MESS-FREE FORMULA: Washable crayons and markers for easy cleanup from skin and surfaces",
+   "PORTABLE STORAGE CASE: All tools store neatly in a portable box for organization and travel",
+   "Non-toxic materials"
+  ],
+  "colors": [
+   {
+    "hex": "#c9d5d7",
+    "percentage": 0.2978
+   },
+   {
+    "hex": "#e9e7dd",
+    "percentage": 0.2119
+   },
+   {
+    "hex": "#3996bc",
+    "percentage": 0.1411
+   },
+   {
+    "hex": "#195e8b",
+    "percentage": 0.1223
+   },
+   {
+    "hex": "#a3a9a9",
+    "percentage": 0.1188
+   },
+   {
+    "hex": "#8f4951",
+    "percentage": 0.1081
+   }
+  ],
+  "offers": [
+   {
+    "url": "https://buy.trychannel3.com/EBmt0n0-jcD4-jTvF3A?o=01M5QYQYYNTF7VPC76TEYZDWF8&aid=01M6ZAG1032AG10EC8Q1543B87",
+    "domain": "dillards.com",
+    "price": {
+     "price": 29.99,
+     "compare_at_price": null,
+     "currency": "USD"
+    },
+    "availability": "InStock",
+    "condition": "new",
+    "max_commission_rate": 0.0,
+    "dimensions": {
+     "length": {
+      "number": 12.83,
+      "unit": "in"
+     },
+     "width": {
+      "number": 12.83,
+      "unit": "in"
+     },
+     "height": {
+      "number": 2.56,
+      "unit": "in"
+     },
+     "weight": null
+    }
+   }
+  ],
+  "variants": null,
+  "structured_attributes": {},
+  "ratings": null
+ },
+ {
+  "id": "GL4M3ND",
+  "title": "Water Drawing Mat Set",
+  "description": "A mess-free water drawing mat set designed for kids aged 6 and up. This creative art kit features characters from 'Bluey' and allows children to draw and reveal images using only water. The set includes a large water drawing mat, a water ink tray, a 3-piece water stamp set, a roller stamp, 3 stencils, 2 bold tip water pens, 2 fine tip water pens, and 1 water brush.",
+  "brands": [
+   {
+    "id": "H4l1",
+    "name": "Bluey"
+   }
+  ],
+  "images": [
+   {
+    "url": "https://cdn.trychannel3.com/1098ec74-a93b-48da-a724-70c371bc0c4c?aid=01M6ZAG1032AG10EC8Q1543B87&mid=ndZg",
+    "cleaned_url": null,
+    "is_main_image": true,
+    "shot_type": "merchant_information",
+    "alt_text": "Box packaging for a Bluey water drawing mat set with a cartoon character."
+   },
+   {
+    "url": "https://cdn.trychannel3.com/d36e5f1b-81a0-4a42-97d5-a5a01285325f?aid=01M6ZAG1032AG10EC8Q1543B87&mid=ndZg",
+    "cleaned_url": null,
+    "is_main_image": false,
+    "shot_type": "merchant_information",
+    "alt_text": "Box packaging for a Bluey water drawing mat set with a cartoon character."
+   }
+  ],
+  "category": {
+   "slug": "toy-drawing-tablets",
+   "title": "Toy Drawing Tablets",
+   "path": [
+    {
+     "slug": "toys-games",
+     "title": "Toys & Games"
+    },
+    {
+     "slug": "toys",
+     "title": "Toys"
+    },
+    {
+     "slug": "art-drawing-toys",
+     "title": "Art & Drawing Toys"
+    },
+    {
+     "slug": "toy-drawing-tablets",
+     "title": "Toy Drawing Tablets"
+    }
+   ],
+   "has_children": false
+  },
+  "gender": null,
+  "age": null,
+  "materials": [],
+  "key_features": [
+   "Mess-free water art activities",
+   "Promotes fine motor skills",
+   "Includes 1 water drawing mat, 1 water ink tray, 3pc water stamp set, 1 roller stamp, 3 stencils, 2 bold tip water pens, 2 fine tip water pens, and 1 water brush",
+   "Ages 6 and up"
+  ],
+  "colors": [
+   {
+    "hex": "#dfe0da",
+    "percentage": 0.2976
+   },
+   {
+    "hex": "#9cb2cc",
+    "percentage": 0.217
+   },
+   {
+    "hex": "#bdbd77",
+    "percentage": 0.2103
+   },
+   {
+    "hex": "#cbcfdc",
+    "percentage": 0.1199
+   },
+   {
+    "hex": "#604f43",
+    "percentage": 0.0975
+   },
+   {
+    "hex": "#979fa5",
+    "percentage": 0.0576
+   }
+  ],
+  "offers": [
+   {
+    "url": "https://buy.trychannel3.com/GL4M3ND-ndZg-jTvF3A?o=01M4EZV84K5KTGKEQQKG6T4JER&aid=01M6ZAG1032AG10EC8Q1543B87",
+    "domain": "tjmaxx.tjx.com",
+    "price": {
+     "price": 16.99,
+     "compare_at_price": null,
+     "currency": "USD"
+    },
+    "availability": "InStock",
+    "condition": "new",
+    "max_commission_rate": 0.049,
+    "dimensions": null
+   }
+  ],
+  "variants": null,
+  "structured_attributes": {
+   "toy-drawing-tablet-screen-type": [
+    "Water drawing mat"
+   ],
+   "toy-drawing-tablet-erase-method": [
+    "Wipe clean"
+   ],
+   "recommended-age-group": [
+    "6 years or older"
+   ],
+   "toy-drawing-tablet-writing-drawing-instrument": [
+    "Water pen/brush"
+   ],
+   "toy-drawing-tablet-accessories-included": [
+    "Stamps",
+    "Stencil/templates",
+    "Stylus"
+   ]
+  },
+  "ratings": null
+ },
+ {
+  "id": "ApLETJY",
+  "title": "Crayola 115pc Imagination Art Set with Case",
+  "description": "The Crayola Imagination Coloring Set is a comprehensive, portable art studio designed for children ages 4 and up. This 115-piece kit is housed in a vibrant, easy-to-carry storage case, making it ideal for travel or organized home use. The set includes a wide variety of artistic tools: 56 crayons, 14 Super Tips markers, 14 Pip Squeaks Skinnies markers, 15 short colored pencils, and 15 large sheets of drawing paper. Additionally, it features three rubbing plates to add texture to artwork and a 'How to' guide to inspire young artists.",
+  "brands": [
+   {
+    "id": "5WJy",
+    "name": "Crayola"
+   }
+  ],
+  "images": [
+   {
+    "url": "https://cdn.trychannel3.com/f845b0fb-bc2d-4ea7-9589-2cc32eae3b76?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "cleaned_url": "https://cdn.trychannel3.com/6a509547-d9e5-4eda-b3dc-a126832adea5?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "is_main_image": true,
+    "shot_type": "hero",
+    "alt_text": "Open Crayola art case filled with colored pencils and crayons."
+   },
+   {
+    "url": "https://cdn.trychannel3.com/323edcf1-e421-48f2-8402-de421017db49?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "cleaned_url": "https://cdn.trychannel3.com/4379369b-1f65-4c22-ad73-713f7c65850b?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "is_main_image": false,
+    "shot_type": "hero",
+    "alt_text": "Crayola Imagination Art Set case with a dinosaur design."
+   },
+   {
+    "url": "https://cdn.trychannel3.com/409d7cab-f4a9-49d4-8a55-a52d541736b1?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "cleaned_url": "https://cdn.trychannel3.com/1da56fbc-5faa-4d35-99f4-667ad9681318?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "is_main_image": false,
+    "shot_type": "hero",
+    "alt_text": "Crayola Imagination Art Set case with a dinosaur design."
+   },
+   {
+    "url": "https://cdn.trychannel3.com/67cfcee0-ba76-4cf3-a0b8-b1ec0062e893?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "cleaned_url": "https://cdn.trychannel3.com/64edd664-e219-4b53-b563-32300411ee60?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "is_main_image": false,
+    "shot_type": "hero",
+    "alt_text": "Crayola Imagination Art Set case with a dinosaur and instructions."
+   },
+   {
+    "url": "https://cdn.trychannel3.com/fbdfb40e-ea73-4c47-90dd-7b6b1f69236d?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "cleaned_url": "https://cdn.trychannel3.com/9ace2ff9-3ff0-46dd-abe3-50c7c50f7847?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "is_main_image": false,
+    "shot_type": "hero",
+    "alt_text": "Open Crayola art case with pencils and tips guide."
+   },
+   {
+    "url": "https://cdn.trychannel3.com/6f23a6be-599c-4a12-9725-801d06b49cea?aid=01M6ZAG1032AG10EC8Q1543B87&mid=QnTm",
+    "cleaned_url": null,
+    "is_main_image": false,
+    "shot_type": "product_information",
+    "alt_text": "Crayola Imagination Art Set contents list and features."
+   }
+  ],
+  "category": {
+   "slug": "drawing-painting-kits",
+   "title": "Drawing & Painting Kits",
+   "path": [
+    {
+     "slug": "arts-entertainment",
+     "title": "Arts & Entertainment"
+    },
+    {
+     "slug": "hobbies-creative-arts",
+     "title": "Hobbies & Creative Arts"
+    },
+    {
+     "slug": "arts-crafts",
+     "title": "Arts & Crafts"
+    },
+    {
+     "slug": "art-craft-kits",
+     "title": "Art & Craft Kits"
+    },
+    {
+     "slug": "drawing-painting-kits",
+     "title": "Drawing & Painting Kits"
+    }
+   ],
+   "has_children": false
+  },
+  "gender": null,
+  "age": null,
+  "materials": [],
+  "key_features": [
+   "ART SET: The Crayola Imagination Art Set features plenty of art tools to get kids creativity flowing",
+   "SAFE AND NONTOXIC: Ideal for kids, ages 5 & up.",
+   "14 Supertips, 15 Short Colored Pencils, 14 Pip Skinny Markers, 56 Crayons, 15 Large Paper Sheets, How to guide",
+   "Case Size: 15.5\" x 11.5\" x 2\"",
+   "RUBBING PLATES: Add texture to artwork using the built-in rubbing plates and coloring supplies!",
+   "PORTABLE ART STUDIO: This Coloring Set has all its art supplies organized in a convenient Carrying Case.",
+   "115 pieces total",
+   "Includes 3 Rubbing Plates",
+   "Safe and nontoxic, ideal for kids ages 4 & up"
+  ],
+  "colors": [
+   {
+    "hex": "#143d81",
+    "percentage": 0.1601
+   },
+   {
+    "hex": "#9b8286",
+    "percentage": 0.1341
+   },
+   {
+    "hex": "#ece2cc",
+    "percentage": 0.1335
+   },
+   {
+    "hex": "#353958",
+    "percentage": 0.1237
+   },
+   {
+    "hex": "#0e1c4e",
+    "percentage": 0.1185
+   },
+   {
+    "hex": "#704255",
+    "percentage": 0.1116
+   },
+   {
+    "hex": "#b4c1c3",
+    "percentage": 0.1115
+   },
+   {
+    "hex": "#547086",
+    "percentage": 0.1068
+   }
+  ],
+  "offers": [
+   {
+    "url": "https://buy.trychannel3.com/ApLETJY-QnTm-jTvF3A?o=01M5Y09G9TBZS8WNNP7HKT8PE6&aid=01M6ZAG1032AG10EC8Q1543B87",
+    "domain": "target.com",
+    "price": {
+     "price": 27.49,
+     "compare_at_price": null,
+     "currency": "USD"
+    },
+    "availability": "InStock",
+    "condition": "new",
+    "max_commission_rate": 0.0,
+    "dimensions": null
+   },
+   {
+    "url": "https://buy.trychannel3.com/ApLETJY-K6RA-jTvF3A?o=01M3JCPKX6511ECG1KVWFM76S5&aid=01M6ZAG1032AG10EC8Q1543B87",
+    "domain": "macys.com",
+    "price": {
+     "price": 36.56,
+     "compare_at_price": 40.62,
+     "currency": "USD"
+    },
+    "availability": "InStock",
+    "condition": "new",
+    "max_commission_rate": 0.056,
+    "dimensions": null
+   },
+   {
+    "url": "https://buy.trychannel3.com/ApLETJY-LFnL-jTvF3A?o=01KMT1RATDPTHSG4B6AMQ8SX1Q&aid=01M6ZAG1032AG10EC8Q1543B87",
+    "domain": "staples.com",
+    "price": {
+     "price": 38.09,
+     "compare_at_price": null,
+     "currency": "USD"
+    },
+    "availability": "InStock",
+    "condition": "new",
+    "max_commission_rate": 0.03,
+    "dimensions": null
+   }
+  ],
+  "variants": null,
+  "structured_attributes": {
+   "pattern": [
+    "Animal"
+   ]
+  },
+  "ratings": {
+   "value": 4.89,
+   "count": 60,
+   "source_count": 2
+  }
+ }
+]

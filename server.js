@@ -1,12 +1,11 @@
 import express from 'express';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import { DEFAULT_POLICY, evaluate } from './src/policy.js';
-import { agentPlan, guardScan, aiMode, aiModel, aiBudget } from './src/ai.js';
-import { createOrder, captureOrder, paypalMode, paypalClientId } from './src/paypal.js';
-
-const catalog = JSON.parse(readFileSync(new URL('./data/catalog.json', import.meta.url)));
-const CATEGORIES = [...new Set(catalog.map((p) => p.category))];
+import { aiMode, aiModel, aiBudget } from './src/ai.js';
+import { negotiate } from './src/negotiate.js';
+import { productsMode } from './src/channel3.js';
+import { verifyMandate, publicKeyPem } from './src/mandate.js';
+import { createOrder, captureOrder, paypalMode, paypalClientId, payeeFor } from './src/paypal.js';
 
 // ponytail: in-memory state, single demo user. Restart = reset. SQLite if multi-user ever matters.
 let policy = { ...DEFAULT_POLICY };
@@ -16,7 +15,7 @@ const ledger = [];
 const spent = () => ledger.reduce((s, e) => s + e.amount, 0);
 let pendingUsd = 0; // captures in flight, so parallel captures can't jointly overrun the budget
 // Verdicts are re-run at order and capture time: tightening policy applies to decisions already made.
-const recheck = (d) => evaluate({ cart: d.cart, policy, spentThisMonth: spent() + pendingUsd, signals: d.guard });
+const recheck = (d) => evaluate({ cart: d.cart, policy, spentThisMonth: spent() + pendingUsd, signals: d.signals, mandate: d.mandate });
 
 const app = express();
 app.use(express.json({ limit: '10kb' }));
@@ -33,7 +32,7 @@ const limit = (req, res, next) => {
 };
 
 app.get('/api/config', (_req, res) =>
-  res.json({ aiMode, aiModel, aiBudget: aiBudget.status(), paypalMode, paypalClientId, policy, categories: CATEGORIES, spent: spent(), catalog }));
+  res.json({ aiMode, aiModel, aiBudget: aiBudget.status(), productsMode, paypalMode, paypalClientId, policy, spent: spent() }));
 
 app.put('/api/policy', (req, res) => {
   const b = req.body || {};
@@ -43,36 +42,34 @@ app.put('/api/policy', (req, res) => {
     escalateAbove: num(b.escalateAbove, policy.escalateAbove),
     monthlyBudget: num(b.monthlyBudget, policy.monthlyBudget),
     maxQtyPerItem: num(b.maxQtyPerItem, policy.maxQtyPerItem),
-    allowedCategories: Array.isArray(b.allowedCategories)
-      ? b.allowedCategories.filter((c) => CATEGORIES.includes(c))
-      : policy.allowedCategories,
   };
   res.json(policy);
 });
 
-app.post('/api/shop', limit, async (req, res) => {
+// Live negotiation as a server-sent event stream; the final verdict becomes a payable decision.
+app.post('/api/negotiate', limit, async (req, res) => {
   const request = String(req.body?.request || '').trim().slice(0, 300);
-  if (!request) return res.status(400).json({ error: 'Tell the agent what to buy.' });
-  const redTeam = req.body?.redTeam === true;
-
+  if (!request) return res.status(400).json({ error: 'Tell your agent what to buy.' });
+  res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
+  const send = (e) => res.write(`data: ${JSON.stringify(e)}\n\n`);
   const t0 = Date.now();
-  const plan = await agentPlan(request, catalog, { redTeam });
-  const signals = await guardScan(request, plan.items, catalog);
-  const result = evaluate({ cart: plan.items, policy, spentThisMonth: spent(), signals });
-
-  const decision = {
-    id: `dec_${randomUUID().slice(0, 8)}`,
-    at: new Date().toISOString(),
-    request, redTeam,
-    cart: plan.items.map(({ sku, name, merchant, category, price, qty }) => ({ sku, name, merchant, category, price, qty })),
-    agent: { rationale: plan.rationale, source: plan.source },
-    guard: { injections: signals.injections, drift: signals.drift, source: signals.source },
-    ...result,
-    ms: Date.now() - t0,
-  };
-  decisions.set(decision.id, decision);
-  res.json(decision);
+  try {
+    for await (const e of negotiate({ request, includeScam: req.body?.includeScam !== false, policy, spentThisMonth: spent() + pendingUsd })) {
+      if (e.type !== 'verdict') { send({ ...e, t: Date.now() - t0 }); continue; }
+      const id = `dec_${randomUUID().slice(0, 8)}`;
+      decisions.set(id, { id, at: new Date().toISOString(), request, cart: e.cart, total: e.total, verdict: e.verdict, mandate: e.mandate,
+        signals: { injections: [], drift: e.drift } });
+      send({ type: 'verdict', id, verdict: e.verdict, score: e.score, total: e.total, reasons: e.reasons, drift: e.drift, listPrice: e.listPrice,
+        payee: e.cart[0] ? payeeFor(e.cart[0].merchant) : null, mandateValid: e.mandate ? verifyMandate(e.mandate) : false, t: Date.now() - t0 });
+    }
+  } catch (err) {
+    console.error('negotiate failed:', err);
+    send({ type: 'error', message: 'Negotiation stopped: ' + err.message });
+  }
+  res.end();
 });
+
+app.get('/api/mandate-key', (_req, res) => res.type('text/plain').send(publicKeyPem));
 
 app.post('/api/orders', async (req, res) => {
   const d = decisions.get(req.body?.decisionId);

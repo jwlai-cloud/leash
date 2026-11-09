@@ -2,3 +2,7 @@ node_modules
 .env
 .ai-usage.json
 .claude/
+.channel3-cache.json
+public/design-demos
+.leash-mandate-key.pem
+public/bazaar-mock.html

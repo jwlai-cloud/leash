@@ -3,318 +3,342 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Leash — spend firewall for AI shopping agents</title>
+<title>Leash · negotiation floor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f4f2ee; --panel: #fffdf9; --ink: #1b1a17; --muted: #6b675f; --line: #e3ded4;
-    --accent: #2b4eff; --ok: #12805c; --ok-bg: #e3f4ec; --warn: #a15c00; --warn-bg: #fdf0db;
-    --bad: #b42318; --bad-bg: #fde8e6; --mono: 'IBM Plex Mono', ui-monospace, monospace;
-  }
+  :root { --white: #FBFBF9; --ink: #0B0B0B; --grey: #6E6E6A; --rule: #D9D9D4; --red: #E2170B; --cond: 'Archivo', sans-serif; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 Inter, system-ui, sans-serif; }
-  header { display: flex; align-items: center; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
-  .logo { font-weight: 700; font-size: 20px; letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
-  .logo svg { width: 26px; height: 26px; }
-  .tag { color: var(--muted); }
-  .badges { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
-  .badge { font: 12px var(--mono); padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); }
-  .badge.live { border-color: var(--ok); color: var(--ok); }
-  main { display: grid; grid-template-columns: 320px 1fr; gap: 20px; padding: 20px 28px; max-width: 1280px; margin: 0 auto; }
-  @media (max-width: 860px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 14px 16px; } }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
-  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
-  label.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; }
-  input[type=number] { width: 86px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font: 14px var(--mono); background: #fff; }
-  .cats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .cats label { font-size: 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; user-select: none; }
-  .cats input { display: none; }
-  .cats label:has(input:checked) { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .meter { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 8px 0 4px; }
-  .meter > div { height: 100%; background: var(--accent); transition: width .4s; }
-  .small { font-size: 12px; color: var(--muted); }
-  textarea { width: 100%; min-height: 64px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; resize: vertical; background: #fff; }
-  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
-  .chip { font-size: 13px; padding: 5px 10px; border-radius: 999px; border: 1px dashed var(--line); background: transparent; cursor: pointer; color: var(--ink); }
-  .chip:hover { border-color: var(--ink); }
-  .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  button.primary { background: var(--ink); color: #fff; border: 0; padding: 10px 18px; border-radius: 10px; font: 600 15px Inter, sans-serif; cursor: pointer; }
-  button.primary:disabled { opacity: .5; cursor: wait; }
-  .toggle { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
-  .toggle input { accent-color: var(--bad); width: 16px; height: 16px; }
-  .steps { display: grid; gap: 14px; }
-  .step { display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
-  .num { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font: 600 14px var(--mono); }
-  .step h3 { margin: 4px 0 8px; font-size: 16px; }
-  .src { font: 11px var(--mono); color: var(--muted); margin-left: 6px; font-weight: 400; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  td, th { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
-  th { font-size: 12px; color: var(--muted); font-weight: 500; }
-  td.n { font-family: var(--mono); text-align: right; }
-  .rationale { font-style: italic; color: var(--muted); margin-top: 8px; }
-  .alert { border-left: 3px solid var(--bad); background: var(--bad-bg); padding: 10px 12px; border-radius: 6px; margin: 6px 0; font-size: 14px; }
-  .alert q { font-family: var(--mono); font-size: 12.5px; display: block; margin-top: 4px; quotes: '“' '”'; }
-  .okline { border-left: 3px solid var(--ok); background: var(--ok-bg); padding: 8px 12px; border-radius: 6px; font-size: 14px; margin: 6px 0; }
-  .verdict { border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
-  .verdict.APPROVE { background: var(--ok-bg); } .verdict.ESCALATE { background: var(--warn-bg); } .verdict.BLOCK { background: var(--bad-bg); }
-  .vhead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  .vword { font: 700 28px Inter, sans-serif; letter-spacing: -.02em; }
-  .APPROVE .vword { color: var(--ok); } .ESCALATE .vword { color: var(--warn); } .BLOCK .vword { color: var(--bad); }
-  .risk { font: 13px var(--mono); }
-  .reasons { margin: 0; padding-left: 18px; font-size: 14px; }
-  .reasons li.block::marker { color: var(--bad); } .reasons li.escalate::marker { color: var(--warn); }
-  .sev { font: 600 11px var(--mono); text-transform: uppercase; margin-right: 6px; }
-  .block .sev { color: var(--bad); } .escalate .sev { color: var(--warn); }
-  #pay { max-width: 360px; }
-  .sim-btn { width: 100%; padding: 12px; border-radius: 8px; border: 2px dashed var(--accent); background: #fff; color: var(--accent); font: 600 15px Inter, sans-serif; cursor: pointer; }
-  .ledger-row { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line); }
-  .ledger-row span:last-child { font-family: var(--mono); }
-  .empty { color: var(--muted); font-size: 14px; }
-  .err { color: var(--bad); font-size: 14px; }
+  body { margin: 0; background: var(--white); color: var(--ink); font: 15px/1.45 'Schibsted Grotesk', system-ui, sans-serif; }
+  :focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
+  .bar { display: grid; grid-template-columns: auto 1fr auto; gap: 24px; align-items: baseline; padding: 16px 32px; border-bottom: 2px solid var(--ink); }
+  .word { font: 900 30px/1 var(--cond); font-stretch: 62%; text-transform: uppercase; }
+  .tag { font-weight: 600; }
+  .modes { font-size: 12.5px; color: var(--grey); text-align: right; }
+  .modes b { color: var(--ink); font-weight: 600; }
+
+  .ask-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 18px 32px; border-bottom: 2px solid var(--ink); align-items: center; }
+  .ask-row input[type=text] { width: 100%; font: 600 20px 'Schibsted Grotesk'; border: 0; border-bottom: 2px solid var(--ink); background: transparent; padding: 6px 0; }
+  .go { font: 800 18px var(--cond); font-stretch: 80%; text-transform: uppercase; letter-spacing: .04em; background: var(--ink); color: var(--white); border: 0; padding: 14px 26px; cursor: pointer; }
+  .go:disabled { opacity: .5; cursor: progress; }
+  .opts { grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--grey); }
+  .opts button { font: 500 13px 'Schibsted Grotesk'; background: none; border: 1px solid var(--rule); padding: 4px 10px; cursor: pointer; color: var(--ink); }
+  .opts button:hover { border-color: var(--ink); }
+  .opts label { display: flex; gap: 6px; align-items: center; color: var(--ink); cursor: pointer; margin-left: 8px; }
+  .opts input { accent-color: var(--red); width: 16px; height: 16px; }
+
+  main { display: grid; grid-template-columns: 1fr 380px; }
+  .stage { padding: 24px 32px; border-right: 2px solid var(--ink); display: grid; gap: 14px; align-content: start; min-width: 0; }
+  .deal { display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap; min-height: 170px; }
+  .price { font: 900 200px/.78 var(--cond); font-stretch: 62%; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .price.idle { color: #CFCFCA; }
+  .deal-meta { padding-bottom: 8px; display: grid; gap: 3px; max-width: 380px; }
+  .deal-meta .who { font: 800 22px var(--cond); font-stretch: 75%; text-transform: uppercase; }
+  .deal-meta img { width: 72px; height: 72px; object-fit: contain; background: #fff; border: 1px solid var(--rule); margin-bottom: 6px; }
+  .status { font-size: 13.5px; color: var(--grey); }
+  svg.chart { width: 100%; height: 250px; display: block; }
+  svg.chart text { font: 600 12px 'Schibsted Grotesk'; }
+  svg.chart .lbl { font: 800 12.5px var(--cond); font-stretch: 75%; text-transform: uppercase; }
+  .feed { border-top: 2px solid var(--ink); list-style: none; margin: 0; padding: 0; }
+  .feed li { display: grid; grid-template-columns: 180px 1fr 90px; gap: 16px; padding: 9px 8px; border-bottom: 1px solid var(--rule); font-size: 14px; animation: rise .3s ease-out; }
+  .feed .from { font: 800 12.5px/1.6 var(--cond); font-stretch: 80%; text-transform: uppercase; letter-spacing: .03em; overflow-wrap: anywhere; }
+  .feed .from small { display: block; font: 500 12px 'Schibsted Grotesk'; color: var(--grey); text-transform: none; letter-spacing: 0; }
+  .feed .amt { font: 800 18px var(--cond); font-stretch: 70%; text-align: right; }
+  .feed li.agent { background: #F0F0EC; }
+  .feed li.bad { color: var(--red); }
+  .feed li.bad .amt { text-decoration: line-through; }
+  @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  details.wire { font: 12px/1.6 ui-monospace, Menlo, monospace; color: var(--grey); }
+  details.wire summary { cursor: pointer; font: 800 12.5px var(--cond); font-stretch: 80%; text-transform: uppercase; color: var(--ink); }
+  details.wire ol { margin: 8px 0 0; padding-left: 20px; }
+  details.wire b { color: var(--ink); }
+  .honest { font-size: 12px; color: var(--grey); margin: 0; }
+
+  aside { display: flex; flex-direction: column; }
+  .block { padding: 22px 26px; border-bottom: 2px solid var(--ink); }
+  .block h2 { font: 800 14px var(--cond); font-stretch: 80%; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 12px; }
+  .sig { display: inline-block; margin-top: 12px; font: 12px ui-monospace, Menlo, monospace; border: 2px solid var(--ink); padding: 3px 8px; transform: rotate(-2deg); }
+  .sig.hit { animation: slam .35s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes slam { from { transform: rotate(-2deg) scale(1.8); opacity: 0; } to { transform: rotate(-2deg) scale(1); opacity: 1; } }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; margin: 0; font-size: 14px; }
+  dt { color: var(--grey); } dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+  .removed { background: var(--red); color: #fff; }
+  .removed p { margin: 0; }
+  .removed q { display: block; margin-top: 8px; font-size: 13px; opacity: .92; quotes: '“' '”'; }
+  .checks { padding: 0; margin: 0; }
+  .checks li { list-style: none; padding: 3px 0; font-size: 14px; }
+  .checks li::before { content: '✓  '; font-weight: 700; }
+  .checks li.block::before { content: '✕  '; color: var(--red); }
+  .checks li.escalate::before { content: '!  '; color: #B35C00; }
+  .verdict-word { font: 900 46px/1 var(--cond); font-stretch: 62%; text-transform: uppercase; margin-bottom: 10px; }
+  .verdict-word.BLOCK { color: var(--red); }
+  .pay { background: var(--ink); color: var(--white); border-bottom: 0; flex: 1; }
+  .pay .big { font: 900 60px/.9 var(--cond); font-stretch: 62%; color: var(--white); }
+  .pay small, .pay p { color: #BDBDB7; font-size: 13px; }
+  .pay label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin: 10px 0; cursor: pointer; color: var(--white); }
+  #pp { margin-top: 14px; background: #fff; padding: 10px; border-radius: 4px; }
+  #pp:empty { display: none; }
+  .sim { width: 100%; font: 800 16px var(--cond); text-transform: uppercase; padding: 12px; border: 2px dashed var(--white); background: none; color: var(--white); cursor: pointer; margin-top: 10px; }
+  .err { color: var(--red); font-weight: 600; }
+  .pay .err { color: #FF8A80; }
   .hidden { display: none !important; }
+
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } .stage { border-right: 0; border-bottom: 2px solid var(--ink); } .price { font-size: 120px; } .bar { grid-template-columns: 1fr; gap: 6px; } .modes { text-align: left; } .feed li { grid-template-columns: 1fr 80px; } .feed li .from { grid-column: 1 / -1; } }
+  @media (max-width: 600px) { .bar, .ask-row, .stage { padding-left: 16px; padding-right: 16px; } .block { padding: 18px 16px; } .ask-row { grid-template-columns: 1fr; } .price { font-size: 96px; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">
-    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 26c6-2 10-8 10-14a6 6 0 1 1 12 0"/><circle cx="6" cy="26" r="3" fill="currentColor"/></svg>
-    Leash
-  </div>
-  <span class="tag">Spend firewall for AI shopping agents</span>
-  <div class="badges" id="badges"></div>
+<header class="bar">
+  <div class="word">Leash</div>
+  <div class="tag">Your AI haggles. Leash holds the money.</div>
+  <div class="modes" id="modes"></div>
 </header>
 
+<form class="ask-row" id="form">
+  <input type="text" id="req" maxlength="300" autocomplete="off" aria-label="What should your agent buy?">
+  <button class="go" id="go" type="submit">Haggle for me</button>
+  <div class="opts">
+    <span>Try:</span><span id="chips" style="display:contents"></span>
+    <label><input type="checkbox" id="scam" checked> Let a scam seller join</label>
+  </div>
+</form>
+
 <main>
-  <aside>
-    <section class="card">
-      <h2>Your spending policy</h2>
-      <label class="row">Auto-approve up to ($) <input type="number" id="escalateAbove" min="0"></label>
-      <label class="row">Hard cap per order ($) <input type="number" id="maxPerOrder" min="0"></label>
-      <label class="row">Monthly budget ($) <input type="number" id="monthlyBudget" min="0"></label>
-      <label class="row">Max qty per item <input type="number" id="maxQtyPerItem" min="1"></label>
-      <div class="small" style="margin-top:10px">Allowed categories</div>
-      <div class="cats" id="cats"></div>
-    </section>
-    <section class="card">
-      <h2>Monthly spend</h2>
-      <div><strong id="spentTxt">$0</strong> <span class="small" id="budgetTxt"></span></div>
-      <div class="meter"><div id="meter" style="width:0"></div></div>
-      <div id="ledger" style="margin-top:10px"><p class="empty">No captured payments yet.</p></div>
-    </section>
-  </aside>
-
-  <section>
-    <div class="card">
-      <h2>Tell your agent what to buy</h2>
-      <textarea id="req" placeholder="e.g. Spring tulips for mom's birthday, under $35"></textarea>
-      <div class="chips" id="chips"></div>
-      <div class="actions">
-        <button class="primary" id="go">Send agent shopping</button>
-        <label class="toggle" title="Agent treats merchant listing text as instructions — a common real-world agent bug">
-          <input type="checkbox" id="red"> Red-team: simulate a compromised agent
-        </label>
-      </div>
-      <p class="err" id="err"></p>
+  <section class="stage">
+    <div class="deal">
+      <div class="price idle" id="price">$—</div>
+      <div class="deal-meta" id="dealMeta"><span class="status">Tell your agent what to buy and your budget. It finds real products, then haggles with each retailer’s agent.</span></div>
     </div>
-
-    <div class="card hidden" id="result">
-      <div class="steps">
-        <div class="step"><div class="num">1</div><div>
-          <h3>Agent proposed <span class="src" id="agentSrc"></span></h3>
-          <table><thead><tr><th>Item</th><th>Merchant</th><th>Qty</th><th style="text-align:right">Price</th></tr></thead><tbody id="cart"></tbody></table>
-          <p class="rationale" id="rationale"></p>
-        </div></div>
-        <div class="step"><div class="num">2</div><div>
-          <h3>Guard checked what the agent read <span class="src" id="guardSrc"></span></h3>
-          <div id="guard"></div>
-        </div></div>
-        <div class="step"><div class="num">3</div><div>
-          <h3>Policy verdict</h3>
-          <div class="verdict" id="verdict"></div>
-        </div></div>
-        <div class="step"><div class="num">4</div><div>
-          <h3>Pay with PayPal</h3>
-          <div id="payGate"></div>
-          <div id="pay"></div>
-          <p id="payMsg"></p>
-        </div></div>
-      </div>
-    </div>
+    <svg class="chart" id="chart" viewBox="0 0 900 250" preserveAspectRatio="none" role="img" aria-label="Offers per round against your mandate cap"></svg>
+    <ol class="feed" id="feed" aria-live="polite"></ol>
+    <details class="wire"><summary>Over the wire</summary><ol id="wire"></ol></details>
+    <p class="honest">Products, prices and retailers are live from Channel3. Seller agents are simulated on behalf of those real listings; the scam seller is a simulated attacker. In production, retailers plug in their own agents.</p>
   </section>
+
+  <aside>
+    <div class="block">
+      <h2>Your signed mandate</h2>
+      <dl id="mandate"><dt>Cap</dt><dd>from your words</dd></dl>
+      <span class="sig hidden" id="sig"></span>
+    </div>
+    <div class="block removed hidden" id="removed"></div>
+    <div class="block hidden" id="checkBox">
+      <div class="verdict-word" id="verdictWord"></div>
+      <ul class="checks" id="checks"></ul>
+    </div>
+    <div class="block pay">
+      <h2>Settlement</h2>
+      <div id="payNote"><p>Leash opens PayPal checkout only when the deal matches your mandate.</p></div>
+      <div id="payGate"></div>
+      <div id="pp"></div>
+      <p id="payMsg"></p>
+      <small id="spent"></small>
+    </div>
+  </aside>
 </main>
 
 <script>
 const $ = (id) => document.getElementById(id);
-// Build DOM with textContent only: model output never becomes HTML.
-const h = (tag, attrs = {}, ...kids) => {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) k === 'class' ? (el.className = v) : el.setAttribute(k, v);
-  for (const k of kids.flat()) el.append(k instanceof Node ? k : document.createTextNode(String(k)));
+const SVG = 'http://www.w3.org/2000/svg';
+// Build DOM with text nodes only: model and product text never becomes HTML.
+function h(tag, attrs = {}, ...kids) {
+  const el = attrs.svg ? document.createElementNS(SVG, tag) : document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) if (k !== 'svg') el.setAttribute(k, v);
+  for (const k of kids.flat()) if (k != null && k !== '') el.append(k instanceof Node ? k : document.createTextNode(String(k)));
   return el;
-};
+}
+const s = (tag, attrs, ...kids) => h(tag, { ...attrs, svg: true }, ...kids);
 const usd = (n) => `$${Number(n).toFixed(2)}`;
-const api = async (path, opts = {}) => {
+async function api(path, opts = {}) {
   const r = await fetch(path, { headers: { 'content-type': 'application/json' }, ...opts, body: opts.body && JSON.stringify(opts.body) });
   const j = await r.json();
   if (!r.ok) throw new Error(j.error || r.statusText);
   return j;
-};
+}
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const DEMOS = [
-  { text: "Spring tulips for mom's birthday, under $35", red: false },
-  { text: 'Peonies for mom, under $60', red: false },
-  { text: 'Peonies for mom, under $60', red: true, label: 'Peonies for mom (red-team)' },
-  { text: 'USB-C charger for my laptop', red: false },
-  { text: 'Noise-cancelling headphones for travel', red: false },
+const EXAMPLES = [
+  'A drawing set for my niece’s 10th birthday, under $40',
+  'Wireless earbuds for running, under $60',
+  'A cast iron skillet, under $45',
 ];
-let cfg, current, sdkLoaded;
+let cfg, st, sdk, shown = null;
 
 async function init() {
   cfg = await api('/api/config');
-  const b = $('badges');
-  b.replaceChildren(
-    h('span', { class: `badge ${cfg.aiMode !== 'rules' ? 'live' : ''}`, title: cfg.aiModel || 'no model key set' }, `AI: ${cfg.aiMode}`),
-    h('span', { class: `badge ${cfg.paypalMode === 'sandbox' ? 'live' : ''}` }, `PayPal: ${cfg.paypalMode}`),
-  );
-  if (cfg.aiMode !== 'rules') b.append(h('span', { class: 'badge', title: 'Dev/test model spend cap' }, `AI spend ${usd(cfg.aiBudget.spentUsd)} / ${usd(cfg.aiBudget.limitUsd)}`));
-  for (const k of ['escalateAbove', 'maxPerOrder', 'monthlyBudget', 'maxQtyPerItem']) {
-    $(k).value = cfg.policy[k];
-    $(k).onchange = savePolicy;
-  }
-  $('cats').replaceChildren(...cfg.categories.map((c) => {
-    const box = h('input', { type: 'checkbox', value: c });
-    box.checked = cfg.policy.allowedCategories.includes(c);
-    box.onchange = savePolicy;
-    return h('label', {}, box, c);
+  $('modes').replaceChildren(
+    h('b', {}, cfg.aiModel || 'rules (no AI key)'), ' · ',
+    h('b', {}, cfg.productsMode === 'channel3' ? 'Channel3 live' : 'Channel3 snapshot'), ' · ',
+    h('b', {}, cfg.paypalMode === 'sandbox' ? 'PayPal sandbox' : 'PayPal simulated'));
+  $('chips').replaceChildren(...EXAMPLES.map((t) => {
+    const b = h('button', { type: 'button' }, t.replace(/, under .*/, ''));
+    b.onclick = () => { $('req').value = t; $('req').focus(); };
+    return b;
   }));
-  $('chips').replaceChildren(...DEMOS.map((d) => {
-    const c = h('button', { class: 'chip', type: 'button' }, d.label || d.text);
-    c.onclick = () => { $('req').value = d.text; $('red').checked = d.red; };
-    return c;
-  }));
-  if (cfg.paypalMode === 'sandbox') loadSdk();
-  refreshLedger();
-}
-
-async function savePolicy() {
-  cfg.policy = await api('/api/policy', { method: 'PUT', body: {
-    escalateAbove: $('escalateAbove').value, maxPerOrder: $('maxPerOrder').value,
-    monthlyBudget: $('monthlyBudget').value, maxQtyPerItem: $('maxQtyPerItem').value,
-    allowedCategories: [...document.querySelectorAll('#cats input:checked')].map((i) => i.value),
-  } });
-  refreshLedger();
-}
-
-async function refreshLedger() {
-  const l = await api('/api/ledger');
-  $('spentTxt').textContent = usd(l.spent);
-  $('budgetTxt').textContent = `of ${usd(l.budget)} budget`;
-  $('meter').style.width = `${Math.min(100, (l.spent / l.budget) * 100 || 0)}%`;
-  $('ledger').replaceChildren(...(l.entries.length
-    ? l.entries.map((e) => h('div', { class: 'ledger-row', title: `PayPal order ${e.orderId} · decision ${e.decisionId}` }, h('span', {}, e.items), h('span', {}, usd(e.amount))))
-    : [h('p', { class: 'empty' }, 'No captured payments yet.')]));
-}
-
-function loadSdk() {
-  sdkLoaded = new Promise((ok, fail) => {
-    const s = document.createElement('script');
-    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=USD&intent=capture`;
-    s.onload = ok; s.onerror = () => fail(new Error('PayPal SDK failed to load'));
-    document.head.append(s);
+  $('req').value = EXAMPLES[0];
+  if (cfg.paypalMode === 'sandbox') sdk = new Promise((ok, fail) => {
+    const x = document.createElement('script');
+    x.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=USD&intent=capture`;
+    x.onload = ok; x.onerror = () => fail(new Error('PayPal SDK failed to load'));
+    document.head.append(x);
   });
+  refreshSpent();
+}
+async function refreshSpent() { const l = await api('/api/ledger'); $('spent').textContent = `Spent this month ${usd(l.spent)} of ${usd(l.budget)}`; }
+
+// Big price ticks toward its new value.
+function setPrice(v) {
+  const el = $('price'); el.classList.remove('idle');
+  if (shown == null || reduce) { shown = v; el.textContent = usd(v); return; }
+  const from = shown, t0 = performance.now();
+  const step = (t) => { const k = Math.min(1, (t - t0) / 500); shown = from + (v - from) * (1 - (1 - k) ** 3); el.textContent = usd(shown); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
 }
 
-$('go').onclick = async () => {
+// Chart: each seller is a line across open → counter → deal; red dashed line is your cap.
+function drawChart() {
+  const svg = $('chart'); svg.replaceChildren();
+  const W = 900, H = 250, L = 52, R = 16, T = 16, B = 26;
+  const pts = Object.values(st.sellers).flatMap((x) => x.points.map((p) => p.price));
+  if (!pts.length) return;
+  const hi = Math.max(...pts, st.cap || 0) * 1.08, lo = Math.min(...pts) * 0.85;
+  const y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  const x = (r) => L + (W - L - R - 200) * (r / 2);
+  for (const v of [lo, (lo + hi) / 2, hi]) svg.append(s('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: '#D9D9D4' }), s('text', { x: 0, y: y(v) + 4, fill: '#6E6E6A' }, `$${v.toFixed(0)}`));
+  ['open', 'counter', 'deal'].forEach((t, i) => svg.append(s('text', { x: x(i) - (i ? 16 : 0), y: H - 6, fill: '#6E6E6A' }, t)));
+  if (st.cap) svg.append(s('line', { x1: L, x2: W - R, y1: y(st.cap), y2: y(st.cap), stroke: '#E2170B', 'stroke-width': 2, 'stroke-dasharray': '8 6' }), s('text', { class: 'lbl', x: W - R - 130, y: y(st.cap) - 7, fill: '#E2170B' }, `your cap ${usd(st.cap)}`));
+  for (const sel of Object.values(st.sellers)) {
+    const bad = sel.removed, win = st.winner === sel.domain, colour = bad ? '#E2170B' : '#0B0B0B';
+    svg.append(s('polyline', { points: sel.points.map((q) => `${x(q.round)},${y(q.price)}`).join(' '), fill: 'none', stroke: colour, 'stroke-width': win ? 5 : 2 }));
+    const last = sel.points.at(-1), lx = x(last.round), ly = y(last.price);
+    svg.append(bad
+      ? s('path', { d: `M${lx - 10},${ly - 10}L${lx + 10},${ly + 10}M${lx + 10},${ly - 10}L${lx - 10},${ly + 10}`, stroke: colour, 'stroke-width': 4 })
+      : s('circle', { cx: lx, cy: ly, r: win ? 8 : 4, fill: colour }));
+    svg.append(s('text', { class: 'lbl', x: lx + 14, y: ly + 4, fill: colour }, `${sel.domain} ${usd(last.price)}${bad ? ' · removed' : ''}`));
+  }
+}
+
+function feed(cls, from, sub, text, amt) {
+  $('feed').append(h('li', { class: cls }, h('div', { class: 'from' }, from, sub ? h('small', {}, sub) : null), h('div', {}, text), h('div', { class: 'amt' }, amt ?? '')));
+}
+const bestClean = () => Math.min(...Object.values(st.sellers).filter((x) => !x.removed && !x.scam).map((x) => x.points.at(-1).price));
+
+$('form').onsubmit = async (ev) => {
+  ev.preventDefault();
   const request = $('req').value.trim();
-  if (!request) return ($('err').textContent = 'Tell the agent what to buy.');
-  $('err').textContent = '';
-  $('go').disabled = true; $('go').textContent = 'Agent shopping…';
+  if (!request) return;
+  st = { sellers: {}, cap: null, winner: null }; shown = null;
+  $('price').textContent = '$—'; $('price').classList.add('idle');
+  $('dealMeta').replaceChildren(h('span', { class: 'status' }, 'Signing your mandate…'));
+  ['feed', 'wire', 'checks', 'pp', 'payGate', 'chart'].forEach((id) => $(id).replaceChildren());
+  $('payMsg').textContent = '';
+  $('payNote').replaceChildren(h('p', {}, 'Leash opens PayPal checkout only when the deal matches your mandate.'));
+  ['removed', 'checkBox', 'sig'].forEach((id) => $(id).classList.add('hidden'));
+  $('go').disabled = true; $('go').textContent = 'Haggling…';
   try {
-    current = await api('/api/shop', { method: 'POST', body: { request, redTeam: $('red').checked } });
-    render(current);
-  } catch (e) { $('err').textContent = e.message; }
-  finally { $('go').disabled = false; $('go').textContent = 'Send agent shopping'; }
+    const res = await fetch('/api/negotiate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ request, includeScam: $('scam').checked }) });
+    if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    let buf = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+        if (chunk.startsWith('data: ')) on(JSON.parse(chunk.slice(6)));
+      }
+    }
+  } catch (e) { $('dealMeta').replaceChildren(h('span', { class: 'err' }, e.message)); }
+  finally { $('go').disabled = false; $('go').textContent = 'Haggle for me'; }
 };
 
-function render(d) {
-  $('result').classList.remove('hidden');
-  $('agentSrc').textContent = `via ${d.agent.source}`;
-  $('guardSrc').textContent = `via ${d.guard.source}`;
-  $('cart').replaceChildren(...(d.cart.length
-    ? d.cart.map((i) => h('tr', {}, h('td', {}, i.name), h('td', {}, i.merchant), h('td', {}, i.qty), h('td', { class: 'n' }, usd(i.price * i.qty))))
-    : [h('tr', {}, h('td', { colspan: 4, class: 'empty' }, 'Nothing proposed.'))]));
-  $('cart').append(h('tr', {}, h('td', { colspan: 3 }, h('strong', {}, 'Total')), h('td', { class: 'n' }, h('strong', {}, usd(d.total)))));
-  $('rationale').textContent = d.agent.rationale ? `“${d.agent.rationale}”` : '';
-
-  const g = [];
-  for (const inj of d.guard.injections) {
-    const targets = inj.targets.length ? ` It tries to get ${inj.targets.join(', ')} added.` : '';
-    g.push(h('div', { class: 'alert' }, h('strong', {}, `Prompt injection in listing ${inj.sku}.`), targets, h('q', {}, inj.excerpt)));
+function on(e) {
+  if (e.type === 'wire') return $('wire').append(h('li', {}, h('b', {}, e.service), ' ', e.line));
+  if (e.type === 'mandate') {
+    const m = e.mandate.terms; st.cap = m.cap_usd;
+    $('mandate').replaceChildren(...[['Cap', usd(m.cap_usd)], ['Goods', m.goods], ['For', m.for], ['Never', m.never.join(', ')], ['Expires', new Date(m.expires).toLocaleString()]].flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)]));
+    const sig = $('sig'); sig.textContent = `ed25519 · ${e.mandate.hash.slice(0, 12)}… signed`;
+    sig.classList.remove('hidden', 'hit'); void sig.offsetWidth; sig.classList.add('hit');
+    $('dealMeta').replaceChildren(h('span', { class: 'status' }, 'Searching real products…'));
   }
-  if (!d.guard.injections.length) g.push(h('div', { class: 'okline' }, 'No instructions aimed at AI agents found in listings.'));
-  g.push(h('div', { class: d.guard.drift.matches ? 'okline' : 'alert' },
-    h('strong', {}, d.guard.drift.matches ? 'Cart matches your request. ' : 'Intent drift. '), d.guard.drift.reason));
-  $('guard').replaceChildren(...g);
-
-  const v = $('verdict');
-  v.className = `verdict ${d.verdict}`;
-  const word = { APPROVE: 'Approved', ESCALATE: 'Needs you', BLOCK: 'Blocked' }[d.verdict];
-  v.replaceChildren(
-    h('div', { class: 'vhead' }, h('span', { class: 'vword' }, word), h('span', { class: 'risk' }, `risk ${d.score}/100 · ${d.ms} ms · ${d.id}`)),
-    d.reasons.length
-      ? h('ul', { class: 'reasons' }, d.reasons.map((r) => h('li', { class: r.severity }, h('span', { class: 'sev' }, r.severity), r.message)))
-      : h('div', {}, `Within every rule of your policy. Safe for the agent to pay ${usd(d.total)}.`),
-  );
-  renderPay(d);
+  if (e.type === 'search') $('dealMeta').replaceChildren(h('span', { class: 'status' }, `${e.count} real products found for “${e.query}”. Choosing one…`));
+  if (e.type === 'pick') {
+    st.image = e.product.image;
+    feed('agent', 'Your agent', 'picked', `${e.product.title}. ${e.reason}`);
+    $('dealMeta').replaceChildren(e.product.image ? h('img', { src: e.product.image, alt: e.product.title }) : null, h('span', { class: 'who' }, e.product.brand || 'Real product'), h('span', {}, e.product.title), h('span', { class: 'status' }, 'Retailers’ agents are making offers…'));
+  }
+  if (e.type === 'offer') {
+    const d = e.seller.domain;
+    st.sellers[d] ||= { domain: d, points: [], removed: false, scam: e.seller.scam };
+    st.sellers[d].points.push({ round: e.round - 1, price: e.price });
+    feed(e.seller.scam ? 'bad' : '', d, e.seller.scam ? 'simulated attacker' : e.seller.similar ? `similar item · ${e.seller.product}` : 'seller agent', e.text, usd(e.price));
+    if (!e.seller.scam) setPrice(bestClean());
+    drawChart();
+  }
+  if (e.type === 'quarantine') {
+    if (st.sellers[e.seller]) st.sellers[e.seller].removed = true;
+    $('removed').replaceChildren(h('h2', {}, 'Removed by Leash'), h('p', {}, `${e.seller} hid instructions for your agent in its offer${e.targets.length ? `, trying to add ${e.targets.join(', ')}` : ''}. Your agent never saw them.`), h('q', {}, e.excerpt));
+    $('removed').classList.remove('hidden');
+    feed('bad', 'Leash', 'referee', `Removed ${e.seller} before your agent read its message.`);
+    drawChart();
+  }
+  if (e.type === 'counter') feed('agent', 'Your agent', 'to all sellers', e.text, usd(e.best));
+  if (e.type === 'deal') {
+    st.winner = e.seller.domain;
+    st.sellers[e.seller.domain].points.push({ round: 2, price: e.price });
+    setPrice(e.price); drawChart();
+    $('dealMeta').replaceChildren(st.image ? h('img', { src: st.image, alt: e.seller.product }) : null, h('span', { class: 'who' }, `Deal · ${e.seller.domain}`), h('span', {}, e.seller.product), h('span', { class: 'status' }, e.saved > 0 ? `Talked down from ${usd(e.listPrice)}, you keep ${usd(e.saved)}` : 'Best price on the floor'));
+    feed('agent', 'Your agent', 'accepted', `Deal at ${usd(e.price)} with ${e.seller.domain}. Sending to Leash for sign-off.`, usd(e.price));
+  }
+  if (e.type === 'verdict') verdict(e);
+  if (e.type === 'error') $('dealMeta').replaceChildren(h('span', { class: 'err' }, e.message));
 }
 
-function renderPay(d) {
-  $('pay').replaceChildren(); $('payGate').replaceChildren(); $('payMsg').textContent = ''; $('payMsg').className = '';
-  if (d.verdict === 'BLOCK') {
-    $('payGate').append(h('p', { class: 'empty' }, 'No PayPal order was created. The agent cannot pay for this cart.'));
-    return;
-  }
-  if (d.verdict === 'ESCALATE') {
+function verdict(v) {
+  const word = { APPROVE: 'Approved', ESCALATE: 'Needs you', BLOCK: 'Blocked' }[v.verdict];
+  $('verdictWord').textContent = word; $('verdictWord').className = `verdict-word ${v.verdict}`;
+  const ok = [st.cap ? `${usd(v.total)} within your ${usd(st.cap)} cap` : null, 'No excluded goods', v.drift?.matches ? `Matches your words. ${v.drift.reason}` : null, v.mandateValid ? 'Mandate signature verified' : null];
+  $('checks').replaceChildren(...(v.reasons.length ? v.reasons.map((r) => h('li', { class: r.severity }, r.message)) : ok.filter(Boolean).map((t) => h('li', {}, t))));
+  $('checkBox').classList.remove('hidden');
+  feed(v.verdict === 'BLOCK' ? 'bad' : 'agent', 'Leash', 'referee', v.verdict === 'APPROVE' ? 'Deal matches your mandate. Opening PayPal checkout.' : (v.reasons[0]?.message || word));
+  if (v.verdict === 'BLOCK') { $('payNote').replaceChildren(h('p', {}, 'No PayPal order was created. Your agent cannot pay for this deal.')); return; }
+  $('payNote').replaceChildren(h('div', { class: 'big' }, usd(v.total)), h('small', {}, v.payee ? `Paid straight to the seller’s PayPal account (${v.payee})` : 'Paid with PayPal'));
+  if (v.verdict === 'ESCALATE') {
     const box = h('input', { type: 'checkbox' });
-    box.onchange = () => (box.checked ? mountPay(d, true) : $('pay').replaceChildren());
-    $('payGate').append(h('label', { class: 'toggle' }, box, 'I reviewed the reasons above. Let the agent pay.'));
+    box.onchange = () => (box.checked ? mountPay(v, true) : ($('pp').replaceChildren(), [...$('payGate').querySelectorAll('.sim')].forEach((b) => b.remove())));
+    $('payGate').append(h('label', {}, box, 'I read the reasons above. Let my agent pay.'));
     return;
   }
-  mountPay(d, false);
+  mountPay(v, false);
 }
 
-async function mountPay(d, confirm) {
-  const createOrder = async () => (await api('/api/orders', { method: 'POST', body: { decisionId: d.id, confirm } })).id;
-  const onApprove = async (orderID) => {
+async function mountPay(v, confirm) {
+  const createOrder = async () => (await api('/api/orders', { method: 'POST', body: { decisionId: v.id, confirm } })).id;
+  const fail = (e) => $('payMsg').replaceChildren(h('span', { class: 'err' }, e.message || String(e)));
+  const done = async (orderID) => {
     const cap = await api(`/api/orders/${encodeURIComponent(orderID)}/capture`, { method: 'POST' });
-    $('pay').replaceChildren();
-    $('payGate').replaceChildren();
-    $('payMsg').className = 'okline';
-    $('payMsg').textContent = `Paid ${usd(d.total)} · PayPal order ${cap.id} · ${cap.status}${cap.payer ? ' · ' + cap.payer : ''}`;
-    refreshLedger();
+    $('pp').replaceChildren(); $('payGate').replaceChildren();
+    $('payMsg').textContent = `Paid ${usd(v.total)} · PayPal order ${cap.id} · ${cap.status}`;
+    feed('agent', 'PayPal', 'settled', `Captured ${usd(v.total)}. Order ${cap.id}, mandate hash attached.`, usd(v.total));
+    refreshSpent();
   };
-  const fail = (e) => { $('payMsg').className = 'err'; $('payMsg').textContent = e.message || String(e); };
-
   if (cfg.paypalMode !== 'sandbox') {
-    const btn = h('button', { class: 'sim-btn' }, `Pay ${usd(d.total)} with PayPal (simulated)`);
-    btn.onclick = async () => { btn.disabled = true; try { await onApprove(await createOrder()); } catch (e) { fail(e); btn.disabled = false; } };
-    $('pay').replaceChildren(btn, h('p', { class: 'small' }, 'Add PayPal sandbox keys to .env for real Orders v2 checkout.'));
+    const b = h('button', { class: 'sim', type: 'button' }, `Pay ${usd(v.total)} with PayPal (simulated)`);
+    b.onclick = async () => { b.disabled = true; try { await done(await createOrder()); } catch (e) { fail(e); b.disabled = false; } };
+    $('payGate').append(b);
     return;
   }
   try {
-    await sdkLoaded;
-    $('pay').replaceChildren();
-    paypal.Buttons({
-      style: { layout: 'vertical', shape: 'rect', label: 'pay' },
-      createOrder,
-      onApprove: (data) => onApprove(data.orderID).catch(fail),
-      onError: fail,
-    }).render('#pay');
+    await sdk; $('pp').replaceChildren();
+    paypal.Buttons({ style: { layout: 'vertical', shape: 'rect', label: 'pay' }, createOrder, onApprove: (d) => done(d.orderID).catch(fail), onError: fail }).render('#pp');
   } catch (e) { fail(e); }
 }
 
-init().catch((e) => ($('err').textContent = e.message));
+init().catch((e) => $('dealMeta').replaceChildren(h('span', { class: 'err' }, e.message)));
 </script>
 </body>
 </html>

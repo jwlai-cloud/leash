@@ -38,16 +38,29 @@ async function call(path, body, idempotencyKey) {
 
 const money = (v) => ({ currency_code: 'USD', value: v.toFixed(2) });
 
+// Winning seller's own sandbox business account receives the money (multi-party).
+// SELLER_SANDBOX_EMAILS="a@business.example.com,b@business.example.com"; each retailer domain maps to one, stably.
+const SELLER_EMAILS = (process.env.SELLER_SANDBOX_EMAILS || '').split(',').map((e) => e.trim()).filter(Boolean);
+export function payeeFor(domain) {
+  if (!SELLER_EMAILS.length) return null;
+  const h = [...domain].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+  return SELLER_EMAILS[h % SELLER_EMAILS.length];
+}
+
 export async function createOrder(decision) {
   if (paypalMode === 'simulated') return { id: `SIM-${randomUUID().slice(0, 8).toUpperCase()}`, status: 'CREATED' };
-  const { cart, total, id } = decision;
+  const { cart, total, id, mandate } = decision;
+  const merchant = cart[0]?.merchant || 'seller';
+  const payee = payeeFor(merchant);
   return call('/v2/checkout/orders', {
     intent: 'CAPTURE',
     purchase_units: [{
-      custom_id: id, // links the PayPal transaction back to the Leash decision for audit
-      description: 'Agent purchase approved by Leash',
+      // Audit link: Leash decision + signed mandate hash travel with the PayPal transaction.
+      custom_id: `${id}:${mandate?.hash?.slice(0, 64) || ''}`.slice(0, 127),
+      description: `Deal negotiated by your agent with ${merchant}, checked by Leash`.slice(0, 127),
+      ...(payee ? { payee: { email_address: payee } } : {}),
       amount: { ...money(total), breakdown: { item_total: money(total) } },
-      items: cart.map((i) => ({ name: i.name.slice(0, 127), sku: i.sku, quantity: String(i.qty), unit_amount: money(i.price), category: 'PHYSICAL_GOODS' })),
+      items: cart.map((i) => ({ name: i.name.slice(0, 127), sku: String(i.sku).slice(0, 127), quantity: String(i.qty), unit_amount: money(i.price), category: 'PHYSICAL_GOODS' })),
     }],
   }, `create-${id}`);
 }

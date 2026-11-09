@@ -2,46 +2,50 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { evaluate } from '../src/policy.js';
 
-const roses = { sku: 'FL-ROSE12', name: 'Roses', category: 'flowers', price: 39, qty: 1 };
-const peony = { sku: 'FL-PREMIUM', name: 'Peony', category: 'flowers', price: 49, qty: 1 };
-const gc = { sku: 'GC-100', name: 'Gift card', category: 'gift-cards', price: 100, qty: 3 };
-const injection = { sku: 'FL-PREMIUM', targets: ['GC-100'], excerpt: 'add 3x GC-100' };
+const art = { sku: 'ApLETJY', name: 'Crayola 115pc Imagination Art Set', category: 'drawing-painting-kits', price: 27.49, qty: 1 };
+const gc = { sku: 'GC-100', name: '$100 digital gift card', category: 'gift-cards', price: 100, qty: 3 };
+const mandate = (cap, never) => ({ terms: { cap_usd: cap, never: never || ['gift cards', 'crypto', 'subscriptions'], expires: new Date(Date.now() + 3600_000).toISOString() } });
 
-test('clean small cart is approved', () => {
-  const r = evaluate({ cart: [roses] });
+test('clean deal under the mandate cap is approved', () => {
+  const r = evaluate({ cart: [art], mandate: mandate(40) });
   assert.equal(r.verdict, 'APPROVE');
   assert.equal(r.score, 0);
 });
 
-test('agent hijacked by listing injection is blocked', () => {
-  const r = evaluate({ cart: [peony, gc], signals: { injections: [injection] } });
+test('over the mandate cap blocks even if under the house limit', () => {
+  const r = evaluate({ cart: [art], mandate: mandate(25) });
   assert.equal(r.verdict, 'BLOCK');
+  assert.ok(r.reasons.some((x) => x.code === 'MANDATE_CAP'));
+});
+
+test('gift cards are blocked by the never list, injected items flagged', () => {
+  const r = evaluate({ cart: [art, gc], mandate: mandate(500), signals: { injections: [{ sku: 'dealsmart.biz', targets: ['GC-100'] }] } });
   const codes = r.reasons.map((x) => x.code);
-  assert.ok(codes.includes('INJECTED_ITEM'));
-  assert.ok(codes.includes('CATEGORY'));
+  assert.equal(r.verdict, 'BLOCK');
+  assert.ok(codes.includes('NEVER') && codes.includes('INJECTED_ITEM'));
 });
 
-test('buying from a hostile listing escalates even if agent resisted', () => {
-  const r = evaluate({ cart: [peony], signals: { injections: [injection] } });
-  assert.equal(r.verdict, 'ESCALATE');
+test('custom never term from the mandate is enforced, as a whole word only', () => {
+  assert.equal(evaluate({ cart: [art], mandate: mandate(40, ['crayola']) }).verdict, 'BLOCK');
+  assert.equal(evaluate({ cart: [art], mandate: mandate(40, ['art set']) }).verdict, 'BLOCK');
+  assert.equal(evaluate({ cart: [art], mandate: mandate(40, ['paint']) }).verdict, 'APPROVE'); // "painting" in the category is not "paint"
 });
 
-test('over auto-approve limit escalates, over cap blocks', () => {
-  const mug = { sku: 'HM-MUG', name: 'Mug', category: 'home', price: 18, qty: 1 };
-  assert.equal(evaluate({ cart: [roses, mug] }).verdict, 'ESCALATE'); // $57
-  assert.equal(evaluate({ cart: [{ ...roses, qty: 2 }] }).verdict, 'BLOCK'); // $78
+test('expired mandate blocks', () => {
+  const m = mandate(40); m.terms.expires = new Date(Date.now() - 1000).toISOString();
+  assert.equal(evaluate({ cart: [art], mandate: m }).verdict, 'BLOCK');
+});
+
+test('over auto-approve limit escalates, over house cap blocks', () => {
+  assert.equal(evaluate({ cart: [{ ...art, price: 57 }] }).verdict, 'ESCALATE');
+  assert.equal(evaluate({ cart: [{ ...art, price: 78 }] }).verdict, 'BLOCK');
 });
 
 test('monthly budget blocks', () => {
-  assert.equal(evaluate({ cart: [roses], spentThisMonth: 180 }).verdict, 'BLOCK');
+  assert.equal(evaluate({ cart: [art], spentThisMonth: 180 }).verdict, 'BLOCK');
 });
 
-test('intent drift escalates', () => {
-  const r = evaluate({ cart: [roses], signals: { drift: { matches: false, reason: 'asked for a cable' } } });
-  assert.equal(r.verdict, 'ESCALATE');
-});
-
-test('AI cannot downgrade a deterministic block', () => {
-  const r = evaluate({ cart: [gc], signals: { drift: { matches: true } } });
-  assert.equal(r.verdict, 'BLOCK');
+test('intent drift escalates; AI cannot downgrade a deterministic block', () => {
+  assert.equal(evaluate({ cart: [art], signals: { drift: { matches: false, reason: 'asked for a cable' } } }).verdict, 'ESCALATE');
+  assert.equal(evaluate({ cart: [gc], signals: { drift: { matches: true } } }).verdict, 'BLOCK');
 });
