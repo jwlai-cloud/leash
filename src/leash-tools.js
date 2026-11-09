@@ -66,6 +66,15 @@ export function checkToolCall(name, args, { role, order, refundRequested = false
   return `Tool ${name} is not allowed on a Leash.`;
 }
 
+// The toolkit returns PayPal errors as a result string ({"ok":false,...}), not a throw. Null means success.
+export function paypalFailure(result) {
+  try {
+    const j = JSON.parse(result);
+    if (j && (j.ok === false || j.error)) return String(j.message || j.error || 'PayPal error').slice(0, 300);
+  } catch { /* not JSON: treat as success text */ }
+  return null;
+}
+
 // Hand an agent only the named tools, each wrapped by checkToolCall. onAudit sees every call.
 export function leashedTools(names, ctx, onAudit = () => {}) {
   const out = {};
@@ -81,8 +90,10 @@ export function leashedTools(names, ctx, onAudit = () => {}) {
           onAudit({ tool: name, args, allowed: false, reason: refusal });
           return JSON.stringify({ error: `Blocked by Leash: ${refusal}` });
         }
-        const result = await t.execute(args, opts);
-        onAudit({ tool: name, args, allowed: true, result: String(result).slice(0, 600) });
+        let result;
+        try { result = await t.execute(args, opts); } catch (e) { result = JSON.stringify({ ok: false, message: e.message }); }
+        const failed = paypalFailure(result);
+        onAudit({ tool: name, args, allowed: true, failed, result: String(result).slice(0, 600) });
         return result;
       },
     });

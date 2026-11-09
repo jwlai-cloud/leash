@@ -6,7 +6,8 @@ import { runAgent } from './agents.js';
 import { leashedTools, toolSource } from './leash-tools.js';
 
 const usd = (n) => `$${Number(n).toFixed(2)}`;
-const toolEvent = (a) => ({ type: 'tool', via: toolSource(a.tool), tool: a.tool, allowed: a.allowed, reason: a.reason || null, args: a.args, result: a.result || null });
+const toolEvent = (a) => ({ type: 'tool', via: toolSource(a.tool), tool: a.tool, allowed: a.allowed, failed: a.failed || null, reason: a.reason || null, args: a.args, result: a.result || null });
+const worked = (audit) => audit.find((a) => a.allowed && !a.failed);
 
 // Run an agent with leashed tools. If the model doesn't make the call, Leash makes the same
 // call through the same leash (never twice: skipped when the tool already ran).
@@ -21,7 +22,12 @@ async function act({ who, role, order, toolName, system, prompt, args, refundReq
     },
   });
   if (!audit.length && r.source === 'ai-sdk') await tools[toolName].execute(args, {}); // model replied without calling the tool
-  return { who, text: r.text || done, source: r.source, audit };
+  const fail = audit.find((a) => a.failed);
+  const blocked = audit.find((a) => !a.allowed);
+  const text = worked(audit) ? (r.text || done)
+    : fail ? `PayPal refused ${toolName}: ${fail.failed}`
+    : `Leash blocked ${toolName}: ${blocked?.reason || 'no call was made'}`;
+  return { who, text, source: r.source, audit };
 }
 
 export async function* settle(order) {
@@ -57,12 +63,12 @@ export async function* refund(order, reason) {
     done: `Refund of ${usd(left)} requested from PayPal.`,
   });
   for (const a of res.audit) yield toolEvent(a);
-  const ok = res.audit.find((a) => a.allowed);
+  const ok = worked(res.audit);
   let amount = 0;
   if (ok) {
     amount = ok.args.amount ? Number(ok.args.amount.value) : left;
     order.refunded = Math.round(((order.refunded || 0) + amount) * 100) / 100;
   }
-  yield { type: 'agent', who: 'Your agent', role: 'buyer', text: ok ? res.text : 'Leash refused the refund.', source: res.source };
+  yield { type: 'agent', who: 'Your agent', role: 'buyer', text: res.text, source: res.source };
   yield { type: 'refunded', amount, ok: Boolean(ok) };
 }

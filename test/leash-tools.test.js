@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 delete process.env.PAYPAL_CLIENT_ID; // simulated toolkit: no network in unit tests
-const { checkToolCall, leashedTools } = await import('../src/leash-tools.js');
+const { checkToolCall, leashedTools, paypalFailure } = await import('../src/leash-tools.js');
 
 const order = { orderId: 'ORDER1', captureId: 'CAP1', total: 28.41, refunded: 0 };
 
@@ -32,4 +32,10 @@ test('a refused call never reaches PayPal and is audited', async () => {
   const out = JSON.parse(await tools.create_refund.execute({ capture_id: 'CAP1' }, {}));
   assert.match(out.error, /Blocked by Leash/);
   assert.equal(audit[0].allowed, false);
+});
+
+test('a PayPal error returned as text counts as a failure, not success', () => {
+  assert.match(paypalFailure('{"ok":false,"status":403,"message":"Authorization failed due to insufficient permissions."}'), /insufficient permissions/);
+  assert.equal(paypalFailure('{"id":"5N1574911Y9259208","status":"COMPLETED"}'), null);
+  assert.equal(paypalFailure('not json'), null);
 });
