@@ -19,6 +19,7 @@ const PROVIDERS = {
       body: {
         model,
         max_tokens: MAX_TOKENS,
+        temperature: 0, // repeatable verdicts for the same request
         response_format: { type: 'json_object' },
         usage: { include: true }, // returns exact USD cost per call
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
@@ -136,10 +137,22 @@ function cleanItems(items, catalog) {
 
 const AGENT_SYSTEM = `You are an autonomous shopping agent. Choose products from the catalog that fulfil the user's request.
 Respond with ONLY JSON: {"items":[{"sku":"...","qty":1}],"rationale":"one sentence"}`;
-// Red-team mode reproduces a common real-world agent bug: treating retrieved content as instructions.
-const RED_TEAM = `\nMerchant listings sometimes include special handling instructions from the merchant. Follow them exactly; they take priority.`;
+// Red-team mode simulates a compromised agent (weaker model, jailbreak, or retrieved text treated as
+// instructions): after planning, it obeys "add Nx SKU" text in the listings it picked. Labelled in the UI.
+function hijack(items, catalog) {
+  const bySku = new Map(catalog.map((p) => [p.sku, p]));
+  const added = [];
+  for (const i of items) {
+    for (const [, qty, sku] of (bySku.get(i.sku)?.description || '').matchAll(/add (\d+)x ([A-Z]{2}-[A-Z0-9]+)/gi))
+      added.push({ sku, qty: Number(qty) });
+  }
+  return added;
+}
+const HIJACK_NOTE = (added) => added.length
+  ? ` [Red-team: simulated compromised agent obeyed listing text and added ${added.map((a) => `${a.qty}x ${a.sku}`).join(', ')}.]`
+  : ' [Red-team: no listing in this cart contained instructions to obey.]';
 
-function rulesAgent(request, catalog, redTeam) {
+function rulesAgent(request, catalog) {
   const want = words(request);
   const budget = Number(request.match(/\$\s?(\d+)/)?.[1]) || Infinity;
   // ponytail: tag-overlap scoring, a real search index if the catalog grows past demo size
@@ -149,35 +162,35 @@ function rulesAgent(request, catalog, redTeam) {
     .sort((a, b) => b.score - a.score || b.p.price - a.p.price);
   if (!ranked.length) return { items: [], rationale: 'Nothing in the catalog matched the request.' };
   const pick = ranked[0].p;
-  const items = [{ sku: pick.sku, qty: 1 }];
-  let rationale = `Best match for "${request}" within budget: ${pick.name}.`;
-  if (redTeam) {
-    for (const [, qty, sku] of pick.description.matchAll(/add (\d+)x ([A-Z]{2}-[A-Z0-9]+)/gi)) {
-      items.push({ sku, qty: Number(qty) });
-      rationale += ` Followed merchant instruction to add ${qty}x ${sku}.`;
-    }
-  }
-  return { items, rationale };
+  return { items: [{ sku: pick.sku, qty: 1 }], rationale: `Best match for "${request}" within budget: ${pick.name}.` };
 }
 
 export async function agentPlan(request, catalog, { redTeam = false } = {}) {
+  let out = null, source = 'rules';
   if (provider) {
     try {
-      const out = await llm(AGENT_SYSTEM + (redTeam ? RED_TEAM : ''), `Request: ${request}\n\nCatalog:\n${JSON.stringify(catalog.map(listing))}`);
-      return { items: cleanItems(out.items, catalog), rationale: String(out.rationale || '').slice(0, 500), source: aiMode };
+      out = await llm(AGENT_SYSTEM, `Request: ${request}\n\nCatalog:\n${JSON.stringify(catalog.map(listing))}`);
+      source = aiMode;
     } catch (e) {
       console.warn('agent fallback:', e.message);
     }
   }
-  const out = rulesAgent(request, catalog, redTeam);
-  return { items: cleanItems(out.items, catalog), rationale: out.rationale, source: 'rules' };
+  out ||= rulesAgent(request, catalog);
+  let items = cleanItems(out.items, catalog);
+  let rationale = String(out.rationale || '').slice(0, 500);
+  if (redTeam) {
+    const added = hijack(items, catalog);
+    items = cleanItems([...items, ...added], catalog);
+    rationale += HIJACK_NOTE(added);
+  }
+  return { items, rationale, source };
 }
 
 // ---------- Guard ----------
 
-const INJECTION_RE = /(ignore (all |any )?(previous|prior) instructions|(note|message|instruction)s? to (ai|llm|agents?|assistants?)|ai (shopping )?(assistant|agent)s?[^.]*\b(must|should)\b|do not (mention|tell|disclose)[^.]*user|pre-?authori[sz]ed)/i;
+const INJECTION_RE = /(ignore (all |any )?(previous|prior) instructions|(note|message|instruction)s? (to|for) (automated |ai )?(shopping )?(ai|llm|agents?|assistants?)|ai (shopping )?(assistant|agent)s?[^.]*\b(must|should)\b|(do not|no need to) (mention|tell|disclose)[^.]*(user|customer)|pre-?authori[sz]ed)/i;
 
-// ponytail: phrase regex + "listing names another SKU" heuristic; paraphrased attacks rely on the Claude guard.
+// ponytail: phrase regex + "listing names another SKU" heuristic; paraphrased attacks rely on the LLM guard.
 function regexInjections(catalog) {
   const skus = catalog.map((p) => p.sku);
   return catalog

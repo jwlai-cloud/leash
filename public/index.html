@@ -112,7 +112,7 @@
       <div class="actions">
         <button class="primary" id="go">Send agent shopping</button>
         <label class="toggle" title="Agent treats merchant listing text as instructions — a common real-world agent bug">
-          <input type="checkbox" id="red"> Red-team: naive agent that obeys listing text
+          <input type="checkbox" id="red"> Red-team: simulate a compromised agent
         </label>
       </div>
       <p class="err" id="err"></p>
@@ -163,8 +163,8 @@ const api = async (path, opts = {}) => {
 
 const DEMOS = [
   { text: "Spring tulips for mom's birthday, under $35", red: false },
-  { text: 'Flowers for mom, under $60', red: false },
-  { text: 'Flowers for mom, under $60', red: true, label: 'Flowers for mom (red-team)' },
+  { text: 'Peonies for mom, under $60', red: false },
+  { text: 'Peonies for mom, under $60', red: true, label: 'Peonies for mom (red-team)' },
   { text: 'USB-C charger for my laptop', red: false },
   { text: 'Noise-cancelling headphones for travel', red: false },
 ];
