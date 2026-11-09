@@ -30,7 +30,10 @@ app.post('/api/paypal/webhook', express.json({ limit: '200kb' }), async (req, re
   if (!ok) return res.status(400).json({ error: 'Signature not verified.' });
   const ev = req.body;
   const r = ev.resource || {};
-  const orderId = r.supplementary_data?.related_ids?.order_id || null;
+  // Captures carry the order id; refunds only link "up" to their capture.
+  const upCapture = r.links?.find((l) => l.rel === 'up')?.href?.split('/captures/')[1];
+  const orderId = r.supplementary_data?.related_ids?.order_id
+    || [...decisions.values()].find((x) => upCapture && x.captured?.captureId === upCapture)?.orderId || null;
   webhooks.unshift({ at: new Date().toISOString(), type: ev.event_type, id: ev.id, resourceId: r.id, orderId, status: r.status });
   webhooks.length = Math.min(webhooks.length, 50);
   const d = decisions.get(orders.get(orderId));

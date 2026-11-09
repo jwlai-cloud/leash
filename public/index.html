@@ -248,6 +248,7 @@ function onAfter(e) {
     const label = `${e.via === 'paypal-agent-toolkit' ? 'PayPal Agent Toolkit' : e.via} · ${e.tool}`;
     feed(e.allowed ? 'agent' : 'bad', e.allowed ? 'Leash allowed' : 'Leash blocked', label, e.allowed ? (e.result || '').slice(0, 160) : e.reason);
     $('wire').append(h('li', {}, h('b', {}, e.allowed ? 'allow' : 'BLOCK'), ` ${label} ${JSON.stringify(e.args)}`));
+    if (!e.allowed) $('payMsg').replaceChildren(h('span', { class: 'err' }, `Leash blocked ${e.tool}: ${e.reason} It never reached PayPal.`));
   }
   if (e.type === 'agent') feed('', e.who, e.role === 'seller' ? 'seller agent' : 'buyer agent', e.text);
   if (e.type === 'refunded' && e.ok) { $('payMsg').textContent = `Refunded ${usd(e.amount)} through PayPal.`; refreshSpent(); }
@@ -255,9 +256,10 @@ function onAfter(e) {
 }
 
 // Show PayPal's own signed confirmation (verified webhook) when it arrives. Polls for ~1 minute.
+const seenHooks = new Set();
 async function watchWebhooks(orderID) {
   if (!cfg.webhooks) return;
-  const seen = new Set();
+  const seen = seenHooks;
   for (let i = 0; i < 20; i++) {
     await new Promise((r) => setTimeout(r, 3000));
     const w = await api('/api/webhooks').catch(() => ({ events: [] }));
@@ -364,6 +366,7 @@ async function mountPay(v, confirm) {
       pull.disabled = true;
       try { await readStream(`/api/orders/${encodeURIComponent(orderID)}/refund`, { reason: 'Changed my mind' }, onAfter); } catch (e) { fail(e); }
       pull.disabled = false; pull.textContent = 'Try refunding again';
+      watchWebhooks(orderID); // PayPal's refund webhook arrives after this
     };
     $('payGate').append(pull);
   };
