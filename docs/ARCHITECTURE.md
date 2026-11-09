@@ -15,7 +15,7 @@
                 8. verdict     src/ai.js checkDrift + src/policy.js evaluate → APPROVE | ESCALATE | BLOCK
    │ PayPal JS SDK button → POST /api/orders {decisionId, confirm}
    ▼
- src/paypal.js createOrder   Orders v2 sandbox; payee = winning seller's sandbox account; custom_id = decision:mandate-hash
+ src/paypal.js createOrder   Orders v2 sandbox; payee = app's merchant (or a seller account via SELLER_SANDBOX_EMAILS, which blocks ship/refund); custom_id = decision:mandate-hash
    │ buyer approves in PayPal popup → POST /api/orders/:id/capture → ledger
    ▼
  POST /api/orders/:id/settle (stream)   src/settle.js
