@@ -12,6 +12,10 @@ services:
         value: "20"
       - key: OPENROUTER_API_KEY
         sync: false
+      - key: CHANNEL3_API_KEY
+        sync: false
+      - key: SELLER_SANDBOX_EMAILS
+        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: GEMINI_API_KEY

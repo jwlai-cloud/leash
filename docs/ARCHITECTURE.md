@@ -1,45 +1,48 @@
 # Architecture (current state)
 
 ```
- Browser (public/index.html)
-   │  1. POST /api/shop {request, redTeam}
+ Browser (public/index.html, "Price pit" UI)
+   │ POST /api/negotiate {request, includeScam}   ← server-sent event stream
    ▼
- server.js ──► src/ai.js  agentPlan()      LLM (or rules)  → proposed cart
-          ──► src/ai.js  guardScan()       LLM (or regex)       → injected SKUs, intent drift
-          ──► src/policy.js evaluate()     deterministic           → APPROVE | ESCALATE | BLOCK
-          stores decision {id, cart, verdict} in memory
-   │  2. PayPal button → POST /api/orders {decisionId, confirm}
+ server.js ─► src/negotiate.js
+                1. mandate     src/mandate.js   cap parsed from user's words, Ed25519-signed
+                2. search      src/channel3.js  real products + retailer offers (cached)
+                3. pick        buyer agent (LLM) chooses product with competing retailers
+                4. open        seller agents (LLM words, code prices) + optional simulated scam seller
+                5. screen      src/ai.js screenMessages: regex + LLM; flagged sellers removed
+                6. counter     buyer agent quotes best price; sellers concede toward hidden floors
+                7. deal        lowest price wins
+                8. verdict     src/ai.js checkDrift + src/policy.js evaluate → APPROVE | ESCALATE | BLOCK
+   │ PayPal JS SDK button → POST /api/orders {decisionId, confirm}
    ▼
- src/paypal.js createOrder()   PayPal Orders v2 (sandbox), custom_id = decisionId
-   │  3. buyer approves in PayPal popup (human checkpoint)
-   │  4. POST /api/orders/:id/capture
-   ▼
- src/paypal.js captureOrder()  → ledger entry (spend counted against monthly budget)
+ src/paypal.js createOrder   Orders v2 sandbox; payee = winning seller's sandbox account; custom_id = decision:mandate-hash
+   │ buyer approves in PayPal popup → POST /api/orders/:id/capture → ledger
 ```
 
 ## Components
 | File | Role |
 |------|------|
-| `server.js` | Express routes, in-memory decisions + ledger, rate limit on AI route |
-| `src/ai.js` | Agent + guard via OpenRouter (DeepSeek), Claude Messages API, Gemini generateContent or Vertex AI (one `llm()` with per-provider request/parse); schema validation; deterministic fallbacks |
-| `src/budget.js` | $20 dev/test model spend cap: reserve worst case before call, record real usage after, persisted to `.ai-usage.json` |
-| `src/policy.js` | Pure policy engine. Always runs. AI signals can only add risk. |
-| `src/paypal.js` | OAuth2 client-credentials, Orders v2 create/capture; simulated mode without creds |
-| `data/catalog.json` | Demo catalog. One listing carries a prompt-injection payload. |
-| `public/index.html` | Single-page UI, PayPal JS SDK buttons |
+| `server.js` | Express routes, SSE stream, in-memory decisions + ledger, rate limit, policy re-check at order and capture |
+| `src/negotiate.js` | The negotiation floor. Async generator of events. All prices computed here. |
+| `src/mandate.js` | Parse cap, sign/verify mandate (Ed25519, key in `.leash-mandate-key.pem`) |
+| `src/channel3.js` | Channel3 `/v1/search`, normalise, disk cache `.channel3-cache.json`, snapshot fallback |
+| `src/ai.js` | LLM providers (OpenRouter default, Claude, Gemini, Vertex), `ask` with rules fallback, `screenMessages`, `checkDrift` |
+| `src/budget.js` | $20 AI spend cap: reserve worst case, settle with billed cost |
+| `src/policy.js` | Pure policy: mandate cap/expiry/never-list, house caps, budget, injected items, drift |
+| `src/paypal.js` | OAuth2, Orders v2 create (payee, custom_id) and capture, idempotency keys |
+| `public/index.html` | Single page UI, design direction 2 (see `design-demos/`) |
 
 ## Trust boundaries
-- Client never sends a cart or price. Order is built server-side from the stored decision + catalog prices.
-- `BLOCK` decisions cannot become orders. `ESCALATE` needs explicit `confirm:true` from the human.
-- Capture only for orders this server created. Full policy re-run at order creation and at capture (counting in-flight captures), so tightening policy applies to decisions already made.
-- Model output is untrusted: SKUs must exist in catalog, qty integer 1–20, otherwise dropped.
+- **Prices:** decided in code from Channel3 offers and seller floors. Model text never sets a price; a reply missing the engine price gets it appended.
+- **Mandate:** cap comes from the user's words. The model may only echo exclusions the user wrote. Signed, verified before payment.
+- **Seller messages:** screened before the buyer agent reads them. Flagged sellers are removed from the floor.
+- **Client:** never sends a cart or price. Orders are built from the stored decision. `BLOCK` cannot become an order; `ESCALATE` needs `confirm:true`. Policy re-runs at order and capture.
+- **Model output:** schema-checked, IDs whitelisted, drift fails closed.
+- **Floors:** never sent to the browser.
 
-## Modes
-Badges in the UI: `AI: openrouter|claude|gemini|vertex|rules`, `PayPal: sandbox|simulated`. Set by env presence (see `.env.example`).
+## Modes (badges in header)
+AI model or `rules`, `Channel3 live` or `snapshot`, `PayPal sandbox` or `simulated`. Set by env (see `.env.example`).
 
-## Acceptance criteria (MVP)
-1. "Get flowers for mom under $60" → APPROVE → PayPal order → capture → ledger shows spend.
-2. Same request with **red-team agent** → agent obeys listing injection, adds gift cards → BLOCK with reasons.
-3. Order over `escalateAbove` → ESCALATE; PayPal button only after human confirms.
-4. Spending past monthly budget → BLOCK.
-5. Works with zero env vars (both fallbacks).
+## Honest limits
+- Seller agents are simulated on behalf of real listings. Retailers don't run agents yet.
+- In-memory state; restart resets the ledger. Single user, no auth.
