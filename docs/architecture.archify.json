@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Leash agent architecture",
-    "subtitle": "Hub and spoke: every agent message passes through Leash; money moves only after code-only checks",
+    "subtitle": "Every agent message and every PayPal tool call passes through Leash; money moves only after code checks",
     "output": "architecture.html",
     "quality_profile": "showcase",
     "views": [
@@ -14,10 +14,9 @@
           "ui",
           "hub",
           "policy",
-          "paypal",
-          "seller-acct"
+          "paypal"
         ],
-        "note": "A request becomes a signed mandate, a checked deal, and a PayPal capture paid to the winning seller."
+        "note": "A request becomes a signed mandate, a checked deal, and a PayPal capture."
       },
       {
         "id": "agents",
@@ -38,7 +37,18 @@
           "channel3",
           "openrouter"
         ],
-        "note": "Real products from Channel3; all agent reasoning from DeepSeek via OpenRouter."
+        "note": "Real products from Channel3; agent reasoning from DeepSeek via OpenRouter, run with the Vercel AI SDK."
+      },
+      {
+        "id": "after-pay",
+        "label": "After payment",
+        "focus": [
+          "hub",
+          "toolguard",
+          "toolkit",
+          "paypal"
+        ],
+        "note": "Agents ship, check and refund through PayPal's Agent Toolkit. The tool guard checks each call against the deal first."
       }
     ]
   },
@@ -89,28 +99,14 @@
     {
       "id": "paypal",
       "type": "external",
-      "label": "PayPal Orders v2",
-      "sublabel": "sandbox \u00b7 JS SDK",
+      "label": "PayPal",
+      "sublabel": "Orders v2 \u00b7 webhooks",
       "pos": [
-        790,
+        900,
         300
       ],
       "size": [
         150,
-        64
-      ]
-    },
-    {
-      "id": "seller-acct",
-      "type": "external",
-      "label": "Seller PayPal",
-      "sublabel": "winning seller paid",
-      "pos": [
-        1040,
-        300
-      ],
-      "size": [
-        140,
         64
       ]
     },
@@ -164,7 +160,7 @@
       "sublabel": "real products",
       "pos": [
         190,
-        490
+        680
       ],
       "size": [
         140,
@@ -178,10 +174,38 @@
       "sublabel": "DeepSeek V4.1 Flash",
       "pos": [
         420,
+        680
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "toolguard",
+      "type": "security",
+      "label": "Tool guard",
+      "sublabel": "checks every call",
+      "pos": [
+        540,
         490
       ],
       "size": [
         150,
+        60
+      ]
+    },
+    {
+      "id": "toolkit",
+      "type": "external",
+      "label": "PayPal Agent Toolkit",
+      "sublabel": "get_order \u00b7 create_refund",
+      "pos": [
+        890,
+        490
+      ],
+      "size": [
+        170,
         60
       ]
     }
@@ -189,13 +213,14 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Leash server \u00b7 Node 22",
+      "label": "Leash server \u00b7 Node 22 on Render",
       "wraps": [
         "hub",
         "policy",
         "buyer",
         "sellers",
-        "screener"
+        "screener",
+        "toolguard"
       ]
     }
   ],
@@ -220,12 +245,6 @@
       "to": "paypal",
       "label": "approved",
       "variant": "emphasis"
-    },
-    {
-      "id": "capture",
-      "from": "paypal",
-      "to": "seller-acct",
-      "label": "capture"
     },
     {
       "id": "to-buyer",
@@ -266,6 +285,27 @@
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top"
+    },
+    {
+      "id": "tools",
+      "from": "hub",
+      "to": "toolguard",
+      "label": "agent tool calls",
+      "variant": "security"
+    },
+    {
+      "id": "allowed",
+      "from": "toolguard",
+      "to": "toolkit",
+      "label": "allowed only"
+    },
+    {
+      "id": "sandbox",
+      "from": "toolkit",
+      "to": "paypal",
+      "label": "sandbox",
+      "fromSide": "top",
+      "toSide": "bottom"
     }
   ],
   "cards": [
@@ -284,16 +324,16 @@
       "items": [
         "Every price and seller floor",
         "Mandate signing and verification",
-        "Final policy verdict before PayPal"
+        "Final verdict and every PayPal tool call"
       ]
     },
     {
       "dot": "cyan",
       "title": "Stack",
       "items": [
-        "Node 22 + Express, no agent framework",
-        "PayPal Orders v2 + JS SDK, Channel3 REST",
-        "$20 AI spend cap, server-sent events"
+        "Vercel AI SDK 4 agents + PayPal Agent Toolkit",
+        "PayPal Orders v2, webhooks, JS SDK; Channel3",
+        "Node 22 + Express on Render, $20 AI cap"
       ]
     }
   ]

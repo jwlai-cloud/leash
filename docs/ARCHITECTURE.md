@@ -25,12 +25,17 @@
  POST /api/paypal/webhook               verified with PayPal verify-webhook-signature
 ```
 
-Visual version: [architecture.html](architecture.html) (Archify, spec in `architecture.archify.json`).
+Diagrams (PNG for GitHub; interactive HTML next to each, specs in `*.archify.json`):
+- [architecture.png](architecture.png): the whole system.
+- [agent-topology.png](agent-topology.png): agents, what each can do, and where Leash sits between them.
+- [sequence.png](sequence.png): one request from typing to refund.
+
+Rebuild a PNG after editing a spec: `node <archify>/bin/archify.mjs deliver <type> docs/<name>.archify.json docs/<name>.html`, then `python3 scripts/svg_png.py docs/<name>.html docs/<name>.png`.
 
 ## Components
 | File | Role |
 |------|------|
-| `server.js` | Express routes, SSE stream, in-memory decisions + ledger, rate limit, policy re-check at order and capture |
+| `server.js` | Express routes, SSE stream, in-memory decisions + ledger, rate limit, policy re-check at order and capture, PayPal webhook endpoint |
 | `src/negotiate.js` | The negotiation floor. Async generator of events. All prices computed here. |
 | `src/mandate.js` | Parse cap, sign/verify mandate (Ed25519, key in `.leash-mandate-key.pem`) |
 | `src/channel3.js` | Channel3 `/v1/search`, normalise, disk cache `.channel3-cache.json`, snapshot fallback |
@@ -40,7 +45,7 @@ Visual version: [architecture.html](architecture.html) (Archify, spec in `archit
 | `src/ai.js` | LLM providers (OpenRouter default, Claude, Gemini, Vertex), `ask` with rules fallback, `screenMessages`, `checkDrift` |
 | `src/budget.js` | $20 AI spend cap: reserve worst case, settle with billed cost |
 | `src/policy.js` | Pure policy: mandate cap/expiry/never-list, house caps, budget, injected items, drift |
-| `src/paypal.js` | OAuth2, Orders v2 create (payee, custom_id) and capture, idempotency keys |
+| `src/paypal.js` | OAuth2 with token caching, Orders v2 create (custom_id) and capture, order tracking, webhook signature check, idempotency keys |
 | `public/index.html` | Single page UI, design direction 2 (see `design-demos/`) |
 
 ## Trust boundaries
@@ -54,7 +59,10 @@ Visual version: [architecture.html](architecture.html) (Archify, spec in `archit
 - **Webhooks:** ignored unless PayPal verifies the signature.
 
 ## Modes (badges in header)
-AI model or `rules`, `Channel3 live` or `snapshot`, `PayPal sandbox` or `simulated`. Set by env (see `.env.example`).
+Agent runtime (Vercel AI SDK + model) or `rules`, `Channel3 live` or `snapshot`, `PayPal sandbox` or `simulated`, `PayPal Agent Toolkit` or `toolkit simulated`. Set by env (see `.env.example`).
+
+## Deploy
+Render free web service from `render.yaml` (Blueprint). Secrets are set in the Render dashboard. The free plan sleeps after 15 minutes idle, and state is in memory, so a restart clears the ledger.
 
 ## Honest limits
 - Seller agents are simulated on behalf of real listings. Retailers don't run agents yet.

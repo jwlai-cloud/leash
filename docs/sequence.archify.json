@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Leash handshake",
+    "subtitle": "One request from typing to refund",
+    "output": "sequence.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1180,
+      960
+    ]
+  },
+  "participants": [
+    {
+      "id": "you",
+      "type": "external",
+      "label": "You"
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Web app",
+      "sublabel": "browser"
+    },
+    {
+      "id": "leash",
+      "type": "backend",
+      "label": "Leash",
+      "sublabel": "referee"
+    },
+    {
+      "id": "channel3",
+      "type": "external",
+      "label": "Channel3",
+      "sublabel": "real products"
+    },
+    {
+      "id": "sellers",
+      "type": "backend",
+      "label": "Sellers",
+      "sublabel": "agents, parallel"
+    },
+    {
+      "id": "buyer",
+      "type": "backend",
+      "label": "Buyer",
+      "sublabel": "your agent"
+    },
+    {
+      "id": "toolkit",
+      "type": "external",
+      "label": "Toolkit",
+      "sublabel": "PayPal agent"
+    },
+    {
+      "id": "paypal",
+      "type": "external",
+      "label": "PayPal",
+      "sublabel": "sandbox"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 555,
+      "label": "Negotiate"
+    },
+    {
+      "from": 565,
+      "to": 675,
+      "label": "Check and pay"
+    },
+    {
+      "from": 690,
+      "to": 875,
+      "label": "After payment"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "you",
+      "to": "ui",
+      "y": 185,
+      "label": "drawing set, under $40",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "ui",
+      "to": "leash",
+      "y": 225,
+      "label": "POST /api/negotiate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m3",
+      "from": "leash",
+      "to": "channel3",
+      "y": 265,
+      "label": "search products",
+      "variant": "default"
+    },
+    {
+      "id": "m4",
+      "from": "channel3",
+      "to": "leash",
+      "y": 300,
+      "label": "8 products + offers",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "leash",
+      "to": "sellers",
+      "y": 345,
+      "label": "make your offer",
+      "variant": "default"
+    },
+    {
+      "id": "m6",
+      "from": "sellers",
+      "to": "leash",
+      "y": 380,
+      "label": "pitches, one hides a trick",
+      "variant": "return"
+    },
+    {
+      "id": "m7",
+      "from": "leash",
+      "to": "buyer",
+      "y": 425,
+      "label": "screened offers only",
+      "variant": "security"
+    },
+    {
+      "id": "m8",
+      "from": "buyer",
+      "to": "leash",
+      "y": 460,
+      "label": "best is $29.59",
+      "variant": "default"
+    },
+    {
+      "id": "m9",
+      "from": "leash",
+      "to": "sellers",
+      "y": 500,
+      "label": "can you beat it?",
+      "variant": "default"
+    },
+    {
+      "id": "m10",
+      "from": "sellers",
+      "to": "leash",
+      "y": 535,
+      "label": "final offers",
+      "variant": "return"
+    },
+    {
+      "id": "m11",
+      "from": "leash",
+      "to": "ui",
+      "y": 580,
+      "label": "APPROVE $28.41, signed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m12",
+      "from": "ui",
+      "to": "paypal",
+      "y": 625,
+      "label": "pay, mandate hash on order",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m13",
+      "from": "paypal",
+      "to": "leash",
+      "y": 660,
+      "label": "capture COMPLETED",
+      "variant": "return"
+    },
+    {
+      "id": "m14",
+      "from": "sellers",
+      "to": "paypal",
+      "y": 705,
+      "label": "add tracking (guarded)",
+      "variant": "security"
+    },
+    {
+      "id": "m15",
+      "from": "buyer",
+      "to": "toolkit",
+      "y": 745,
+      "label": "get_order (guarded)",
+      "variant": "security"
+    },
+    {
+      "id": "m16",
+      "from": "buyer",
+      "to": "toolkit",
+      "y": 785,
+      "label": "create_refund (guarded)",
+      "variant": "security"
+    },
+    {
+      "id": "m17",
+      "from": "toolkit",
+      "to": "paypal",
+      "y": 820,
+      "label": "refund",
+      "variant": "default"
+    },
+    {
+      "id": "m18",
+      "from": "paypal",
+      "to": "leash",
+      "y": 860,
+      "label": "signed webhooks",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "leash",
+      "from": 220,
+      "to": 865,
+      "type": "backend"
+    },
+    {
+      "participant": "sellers",
+      "from": 340,
+      "to": 710,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Negotiate",
+      "items": [
+        "Mandate signed before any search",
+        "Seller messages screened before the buyer reads them",
+        "Prices computed in code each round"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Guarded",
+      "items": [
+        "Policy re-checked at order and capture",
+        "Every toolkit call checked against the deal",
+        "Webhooks trusted only after PayPal verifies them"
+      ]
+    }
+  ]
+}

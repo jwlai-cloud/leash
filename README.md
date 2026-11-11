@@ -2,6 +2,8 @@
 
 **Try it live:** https://leash-i813.onrender.com (PayPal sandbox; the first load can take up to a minute while the free server wakes up).
 
+Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/). Demo video: _YouTube link coming_.
+
 You tell your AI agent what you want and how much you'll spend. It finds real products from real stores, haggles with each seller's agent for a better price, and pays with PayPal. Leash sits between the agents and checks everything that touches money:
 
 - It turns your request into a signed mandate: the spending cap, what to buy, what never to buy, and an expiry time.
@@ -13,6 +15,14 @@ Example: "A drawing set for my niece's 10th birthday, under $40" → 8 real prod
 
 ## Why
 AI agents can pay now, and they read everything sellers send them. Some sellers will try to take advantage of that, and gift cards are a common scam payout. We wanted an agent that still does useful work, like negotiating, but can't be talked into spending money you didn't agree to.
+
+## How it works
+![Leash architecture](docs/architecture.png)
+
+Every agent message and every PayPal tool call goes through Leash. More detail:
+- [Agent topology](docs/agent-topology.png): who talks to whom, and what each agent is allowed to do.
+- [Sequence](docs/sequence.png): one request, step by step, from typing to refund.
+- [Architecture notes](docs/ARCHITECTURE.md): components and trust boundaries.
 
 ## Run it
 
@@ -59,15 +69,15 @@ Model calls are hard-capped at **$20** (`AI_BUDGET_USD`). Each call reserves its
 
 ## Tests
 ```bash
-npm test          # policy, mandate, negotiation pricing, spend cap
+npm test          # policy, mandate, negotiation pricing, spend cap, tool guard
 npm run smoke     # end to end against a running server (npm start first)
 ```
 
 ## Docs
-[Architecture](docs/ARCHITECTURE.md) · [Decisions (ADRs)](docs/adr) · [Design directions](design-demos/directions.md) · [Progress](docs/PROGRESS.md) · [Video script](docs/VIDEO_SCRIPT.md)
+[Architecture](docs/ARCHITECTURE.md) · [Agent topology](docs/agent-topology.png) · [Sequence](docs/sequence.png) · [Decisions (ADRs)](docs/adr) · [Design directions](design-demos/directions.md) · [Progress](docs/PROGRESS.md) · [Video script](docs/VIDEO_SCRIPT.md)
 
 ## Deploy
-`render.yaml` is included: Render → New → Blueprint → this repo, then set the secrets.
+`render.yaml` is included: Render → New → Blueprint → this repo, then set the secrets. The live demo runs this way on Render's free plan.
 
 ## License
 MIT

@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Leash agent topology",
+    "subtitle": "Hub and spoke: agents never talk to each other directly, and every PayPal tool call goes through the tool guard",
+    "output": "agent-topology.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "kohls",
+      "type": "backend",
+      "label": "Seller agent",
+      "sublabel": "kohls.com \u00b7 own floor",
+      "pos": [
+        420,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dillards",
+      "type": "backend",
+      "label": "Seller agent",
+      "sublabel": "dillards.com \u00b7 own floor",
+      "pos": [
+        620,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "scam",
+      "type": "external",
+      "label": "Scam seller",
+      "sublabel": "simulated attacker",
+      "pos": [
+        820,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "screener",
+      "type": "security",
+      "label": "Screener",
+      "sublabel": "LLM + regex",
+      "pos": [
+        620,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "leash",
+      "type": "backend",
+      "label": "Leash referee",
+      "sublabel": "runs every round",
+      "pos": [
+        340,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "the hub"
+    },
+    {
+      "id": "buyer",
+      "type": "backend",
+      "label": "Buyer agent",
+      "sublabel": "your side",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "price",
+      "type": "security",
+      "label": "Price engine",
+      "sublabel": "code only",
+      "pos": [
+        340,
+        490
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "guard",
+      "type": "security",
+      "label": "Tool guard",
+      "sublabel": "one deal, least privilege",
+      "pos": [
+        60,
+        490
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "toolkit",
+      "type": "external",
+      "label": "PayPal Agent Toolkit",
+      "sublabel": "get_order \u00b7 create_refund",
+      "pos": [
+        40,
+        680
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "p1",
+      "from": "kohls",
+      "to": "screener",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "p2",
+      "from": "dillards",
+      "to": "screener",
+      "label": "pitch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "p3",
+      "from": "scam",
+      "to": "screener",
+      "label": "hidden instruction",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "safe",
+      "from": "screener",
+      "to": "leash",
+      "label": "safe only",
+      "variant": "security"
+    },
+    {
+      "id": "offers",
+      "from": "leash",
+      "to": "buyer",
+      "label": "offers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "concede",
+      "from": "leash",
+      "to": "price",
+      "label": "best offer",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        420,
+        427
+      ]
+    },
+    {
+      "id": "tools",
+      "from": "buyer",
+      "to": "guard",
+      "label": "tool calls",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "allowed",
+      "from": "guard",
+      "to": "toolkit",
+      "label": "allowed only",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        140,
+        615
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Seller side \u00b7 one agent per real listing",
+      "wraps": [
+        "kohls",
+        "dillards",
+        "scam"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Agents",
+      "items": [
+        "Buyer agent picks a product and counters",
+        "Seller agents run in parallel, each knows only its own floor",
+        "Seller agent adds tracking after payment, through the same guard"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Code, not AI",
+      "items": [
+        "Screener runs before your agent reads anything",
+        "Price engine sets every price from real offers",
+        "Tool guard checks each PayPal call against the deal"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Shape",
+      "items": [
+        "Hub and spoke through Leash",
+        "Fan-out to sellers each round",
+        "Vercel AI SDK, DeepSeek via OpenRouter"
+      ]
+    }
+  ]
+}

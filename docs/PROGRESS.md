@@ -13,6 +13,11 @@ Live: https://leash-i813.onrender.com (Render free plan, sleeps after 15 min idl
 - Toolkit returns PayPal errors as text; Leash counted them as success. Now reported as "PayPal refused".
 - Payments go to the app's merchant account so shipping and refunds run end to end; `SELLER_SANDBOX_EMAILS` left empty. See ADR 0006.
 
+### Also done on 2026-11-11
+- Demo video (2:55, narrated in a Personal Voice) built from a live capture and a screen recording: `docs/VIDEO_SCRIPT.md`, `scripts/capture.py`, `scripts/build_video.py`.
+- Devpost story in plain language (`docs/SUBMISSION.md`), testing instructions for judges.
+- Diagrams refreshed: architecture, agent topology, sequence (PNG + interactive HTML).
+
 ### Next (priority order)
 1. Video done (docs/VIDEO_SCRIPT.md, built by scripts/build_video.py). Upload to YouTube, public.
 2. Devpost write-up from [SUBMISSION.md](SUBMISSION.md) (update for the pivot); select Channel3 and Render as sponsor tools. Deadline Thu 12 Nov, 12:00 PST.
@@ -29,7 +34,7 @@ Live: https://leash-i813.onrender.com (Render free plan, sleeps after 15 min idl
 
 - Agent framework + leashed PayPal Agent Toolkit ([ADR 0006](adr/0006-agent-framework-and-paypal-agent-toolkit.md)): real sandbox `get_order` and `create_refund` (refund 5N1574911Y9259208) verified; second refund refused by Leash. Independent seller agents. Webhook endpoint with signature verification. `npm test` 20/20.
 
-### Not verified yet
+### Not verified yet (all verified on 2026-11-11, see above, except mobile layout)
 - Full settle flow on a fresh real capture through the UI (shipping on Orders v2 `/track`).
 - Webhooks on a public URL (needs Render + `PAYPAL_WEBHOOK_ID`).
 - **Payee routing.** `SELLER_SANDBOX_EMAILS` is not set yet, so payments go to the app's own sandbox merchant.

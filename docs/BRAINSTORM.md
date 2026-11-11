@@ -1,5 +1,7 @@
 # Brainstorm — PayPal AI Hackathon
 
+> Historical: this is where the idea started, as a spend firewall. We later pivoted to the negotiation floor ([ADR 0005](adr/0005-negotiation-floor-pivot.md)).
+
 Source: https://paypalaihackathon.devpost.com/ (read 2026-10-28)
 
 **Rules that matter:** no tracks; must *meaningfully* use PayPal (sandbox) **and** AI; judges must be able to run it (repo instructions or hosted URL); public repo + license; <3 min YouTube video.

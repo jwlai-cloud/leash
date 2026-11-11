@@ -9,6 +9,8 @@
 
 **Sponsor tools to select:** Channel3, Render.
 
+**Gallery images:** `Desktop/leash-gallery/` (thumbnail, two explainer cards, four app screenshots, and the architecture, agent topology and sequence diagrams). The diagrams are also in the repo under `docs/`.
+
 **Testing instructions** (paste into the form's testing field)
 1. Open https://leash-i813.onrender.com. It's on a free server, so the first load can take up to a minute.
 2. Keep the default request and "Let a scam seller join" ticked, then press **Haggle for me**. You'll see the scam seller get removed and the price come down.
