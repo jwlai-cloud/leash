@@ -116,5 +116,5 @@ joined = TMP / 'joined.mp4'
 run('ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', str(lst), '-c', 'copy', str(joined))
 d = dur(joined)
 run('ffmpeg', '-y', '-i', str(joined), '-vf', f'fade=t=in:st=0:d=0.5,fade=t=out:st={d-0.8:.2f}:d=0.8',
-    '-af', f'afade=t=out:st={d-0.8:.2f}:d=0.8', '-c:v', 'libx264', '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', str(OUTFILE))
+    '-af', f'loudnorm=I=-16:TP=-1.5:LRA=11,afade=t=out:st={d-0.8:.2f}:d=0.8', '-ar', '48000', '-c:v', 'libx264', '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', str(OUTFILE))
 print(f'{OUTFILE}  {dur(OUTFILE):.1f}s')
