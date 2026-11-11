@@ -1,5 +1,7 @@
 # Leash: your AI haggles, Leash holds the money
 
+**Try it live:** https://leash-i813.onrender.com (PayPal sandbox; the first load can take up to a minute while the free server wakes up).
+
 You tell your AI agent what you want and your budget. It finds **real products** from real retailers, **haggles with each seller's agent** for a better price, and pays the winning seller with **PayPal**. Leash is the referee in the middle:
 
 - It turns your request into a **signed mandate** (spend cap, what to buy, what never to buy, expiry).
