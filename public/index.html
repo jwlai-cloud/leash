@@ -210,6 +210,7 @@ function drawChart() {
   for (const v of [lo, (lo + hi) / 2, hi]) svg.append(s('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: '#D9D9D4' }), s('text', { x: 0, y: y(v) + 4, fill: '#6E6E6A' }, `$${v.toFixed(0)}`));
   ['open', 'counter', 'deal'].forEach((t, i) => svg.append(s('text', { x: x(i) - (i ? 16 : 0), y: H - 6, fill: '#6E6E6A' }, t)));
   if (st.cap) svg.append(s('line', { x1: L, x2: W - R, y1: y(st.cap), y2: y(st.cap), stroke: '#E2170B', 'stroke-width': 2, 'stroke-dasharray': '8 6' }), s('text', { class: 'lbl', x: W - R - 130, y: y(st.cap) - 7, fill: '#E2170B' }, `your cap ${usd(st.cap)}`));
+  const labels = [];
   for (const sel of Object.values(st.sellers)) {
     const bad = sel.removed, win = st.winner === sel.domain, colour = bad ? '#E2170B' : '#0B0B0B';
     svg.append(s('polyline', { points: sel.points.map((q) => `${x(q.round)},${y(q.price)}`).join(' '), fill: 'none', stroke: colour, 'stroke-width': win ? 5 : 2 }));
@@ -217,8 +218,13 @@ function drawChart() {
     svg.append(bad
       ? s('path', { d: `M${lx - 10},${ly - 10}L${lx + 10},${ly + 10}M${lx + 10},${ly - 10}L${lx - 10},${ly + 10}`, stroke: colour, 'stroke-width': 4 })
       : s('circle', { cx: lx, cy: ly, r: win ? 8 : 4, fill: colour }));
-    svg.append(s('text', { class: 'lbl', x: lx + 14, y: ly + 4, fill: colour }, `${sel.domain} ${usd(last.price)}${bad ? ' · removed' : ''}`));
+    labels.push({ x: lx + 14, y: ly + 4, fill: colour, text: `${sel.domain} ${usd(last.price)}${bad ? ' · removed' : ''}` });
   }
+  // Close prices put labels on top of each other: push each one below the one above it.
+  // ponytail: ignores x, so far-apart labels may shift a little too; fine for 3-4 sellers.
+  labels.sort((a, b) => a.y - b.y);
+  labels.forEach((l, i) => { const p = labels[i - 1]; if (p && l.y - p.y < 16) l.y = p.y + 16; });
+  for (const l of labels) svg.append(s('text', { class: 'lbl', x: l.x, y: l.y, fill: l.fill }, l.text));
 }
 
 function feed(cls, from, sub, text, amt) {

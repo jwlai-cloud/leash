@@ -6,3 +6,4 @@ node_modules
 public/design-demos
 .leash-mandate-key.pem
 public/bazaar-mock.html
+video/
