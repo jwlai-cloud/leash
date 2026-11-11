@@ -16,7 +16,7 @@ W, H, FPS = 1920, 1200, 30
 PAPER = 'F7F7F4'
 OFFSET = float(sys.argv[1]) if len(sys.argv) > 1 else 1.5
 OUTFILE = Path(os.environ.get('OUTFILE', 'video/leash-demo.mp4'))
-PAD = 0.6  # silence after each line
+PAD = 0.45  # silence after each line
 
 def run(*a):
     subprocess.run(a, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
@@ -81,6 +81,13 @@ def caption(text):
     t = text.replace(':', r'\:').replace("'", r"\'")
     return (f"drawtext=fontfile='{FONT}':text='{t}':fontsize=40:fontcolor=white:box=1:boxcolor=0x0B0B0B@0.82:boxborderw=18:"
             f"x=(w-text_w)/2:y=h-110:enable='gte(t,0.4)'")
+
+# Text-to-speech guesses at words spelled the same but said differently ("live products" came out as the verb).
+HETERONYMS = r"\b(live|lives|read|record|records|close|present|lead|content|minute|object|produce|refuse|tear|wind|wound|use|desert|bass|bow|row|subject|permit|contract|conduct|convert|estimate|house|separate|suspect|excuse|perfect|polish|reject|resume|invalid|deliberate|duplicate)\b"
+import re
+for f in sorted((V / 'voice').glob('[0-9][0-9].txt')):
+    for m in re.finditer(HETERONYMS, f.read_text(), re.I):
+        print(f'warning: {f.name} has "{m.group(0)}", which a synthetic voice may mispronounce. Reword it.')
 
 if TMP.exists(): shutil.rmtree(TMP)
 TMP.mkdir(parents=True)
