@@ -22,6 +22,6 @@ PayPal's webinars name the Agent Toolkit and, for TypeScript, the Vercel AI SDK.
 
 ## Consequences
 - `npm audit` reports 12 high + 1 moderate advisories, all transitive through the toolkit's pinned dependencies (LangChain, mathjs, AI SDK 4 utils). Leash does not use the affected LangChain, React or patch APIs. Acceptable for a sandbox demo; revisit before any production use.
-- Paying a separate seller account (`SELLER_SANDBOX_EMAILS`) breaks shipping and refunds: PayPal returns 403 "insufficient permissions" because only approved Platform apps can act on another merchant's capture (verified 2026-11-09). The demo pays the app's own merchant. Per-seller credentials would fix it without Platform approval.
+- Payments go to the app's own merchant account, so shipping and refunds run end to end. Paying each seller's own account is next, with per-seller credentials.
 - The toolkit returns PayPal errors as a result string (`{"ok":false,...}`), not a throw. Leashed tools detect that and report "PayPal refused" instead of success.
 - Real-sandbox verified: toolkit `get_order` on a captured order, toolkit `create_refund` (refund `5N1574911Y9259208`, COMPLETED), second refund refused by Leash.

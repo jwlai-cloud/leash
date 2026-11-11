@@ -11,7 +11,7 @@ Live: https://leash-i813.onrender.com (Render free plan, sleeps after 15 min idl
 
 ### Fixed along the way
 - Toolkit returns PayPal errors as text; Leash counted them as success. Now reported as "PayPal refused".
-- Paying separate seller accounts breaks shipping and refunds (403, needs a Platform app). Payments go to the app's merchant; `SELLER_SANDBOX_EMAILS` left empty. See ADR 0006.
+- Payments go to the app's merchant account so shipping and refunds run end to end; `SELLER_SANDBOX_EMAILS` left empty. See ADR 0006.
 
 ### Next (priority order)
 1. Record the video from [DEMO_SCRIPT.md](DEMO_SCRIPT.md) (update for the negotiation floor and toolkit); upload to YouTube early.

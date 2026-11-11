@@ -30,7 +30,7 @@ It runs with **zero keys**: rules instead of AI, a bundled snapshot of real Chan
 | `OPENROUTER_API_KEY` (or `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`) | openrouter.ai/keys | rule-based agents and guard |
 | `CHANNEL3_API_KEY` | channel3.ai (free, 1,000 searches/month) | bundled snapshot of real results |
 | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` | developer.paypal.com → Apps & Credentials → **Sandbox** | simulated orders |
-| `SELLER_SANDBOX_EMAILS` (optional, leave unset for the full demo) | sandbox **business** accounts, comma separated | money goes to the app's sandbox merchant. With it set, payment goes to the winning seller, but shipping and refunds fail: only PayPal-approved Platform apps can act on another merchant's payment |
+| `SELLER_SANDBOX_EMAILS` (optional, experimental) | sandbox **business** accounts, comma separated | money goes to the app's sandbox merchant (recommended: shipping and refunds run there) |
 | `PAYPAL_WEBHOOK_ID` (optional) | your app → Webhooks; URL `https://<host>/api/paypal/webhook`, events `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.REFUNDED` | no webhook confirmations |
 
 To pay, log in to the PayPal popup with a sandbox **personal** account (developer.paypal.com → Testing Tools → Sandbox Accounts).
