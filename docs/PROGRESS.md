@@ -14,7 +14,7 @@ Live: https://leash-i813.onrender.com (Render free plan, sleeps after 15 min idl
 - Payments go to the app's merchant account so shipping and refunds run end to end; `SELLER_SANDBOX_EMAILS` left empty. See ADR 0006.
 
 ### Next (priority order)
-1. Record the video from [DEMO_SCRIPT.md](DEMO_SCRIPT.md) (update for the negotiation floor and toolkit); upload to YouTube early.
+1. Video done (docs/VIDEO_SCRIPT.md, built by scripts/build_video.py). Upload to YouTube, public.
 2. Devpost write-up from [SUBMISSION.md](SUBMISSION.md) (update for the pivot); select Channel3 and Render as sponsor tools. Deadline Thu 12 Nov, 12:00 PST.
 3. Mobile layout check.
 
@@ -38,7 +38,7 @@ Live: https://leash-i813.onrender.com (Render free plan, sleeps after 15 min idl
 ### Next (priority order)
 1. Owner: create 2–3 sandbox business accounts and set `SELLER_SANDBOX_EMAILS` (payee routing).
 2. Deploy to Render; register the webhook URL; set `PAYPAL_WEBHOOK_ID`. (Public repo done: github.com/jwlai-cloud/leash.)
-3. Record the video from [DEMO_SCRIPT.md](DEMO_SCRIPT.md) (update for the negotiation floor); upload to YouTube early.
+3. Record the video from [VIDEO_SCRIPT.md](VIDEO_SCRIPT.md) (update for the negotiation floor); upload to YouTube early.
 4. Devpost write-up from [SUBMISSION.md](SUBMISSION.md) (update for the pivot); select Channel3 and Render as sponsor tools. Deadline Thu 12 Nov, 12:00 PST.
 
 ### Known limits (deliberate)
