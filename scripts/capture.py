@@ -6,12 +6,13 @@ The only manual step: you click the PayPal button and log in to the sandbox popu
 
 Run: python3 scripts/capture.py
 """
-import os, sys, time
+import os, subprocess, sys, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 URL = sys.argv[1] if len(sys.argv) > 1 else 'https://leash-i813.onrender.com'
 OUT = Path(os.environ.get('OUT', 'video/capture')); OUT.mkdir(parents=True, exist_ok=True)
+(OUT / 'marks.tsv').write_text('')
 W, H = 1440, 900
 t0 = time.time()
 marks = []
@@ -22,7 +23,8 @@ def log(msg):
 def shot(page, name, el=None):
     path = OUT / f'{name}.png'
     (page.locator(el).screenshot(path=path) if el else page.screenshot(path=path))
-    marks.append(f'{time.time() - t0:.1f}\t{name}')
+    with open(OUT / 'marks.tsv', 'a') as f:  # written as we go, so a failed run still keeps its marks
+        f.write(f'{time.time() - t0:.1f}\t{name}\n')
     log(f'shot {name}')
 
 def show(page, sel):
@@ -34,6 +36,7 @@ with sync_playwright() as p:
     ctx = browser.new_context(viewport={'width': W, 'height': H}, device_scale_factor=2,
                               record_video_dir=str(OUT), record_video_size={'width': W, 'height': H})
     page = ctx.new_page()
+    page.bring_to_front()
     log('opening site (Render may take up to a minute to wake)')
     page.goto(URL, timeout=120_000)
     page.wait_for_function("document.querySelector('#modes') && document.querySelector('#modes').textContent.includes('PayPal')", timeout=120_000)
@@ -70,11 +73,13 @@ with sync_playwright() as p:
     show(page, '#payGate'); shot(page, '08-paygate-page')
 
     # Manual step: PayPal login is yours.
+    page.bring_to_front()
+    subprocess.run(['osascript', '-e', 'display notification "Click the PayPal button and pay in the Leash window" with title "Leash capture" sound name "Glass"'])
     log('>>> YOUR TURN: if it says Needs you, tick the box. Click the PayPal button, log in with the sandbox buyer account, and pay.')
     sim = page.get_by_role('button', name='(simulated)')
     if sim.count():  # dry run against a server without PayPal keys
         sim.first.click()
-    page.wait_for_function("/Paid/.test(document.querySelector('#payMsg').textContent)", timeout=600_000)
+    page.wait_for_function("/Paid/.test(document.querySelector('#payMsg').textContent)", timeout=1_800_000)
     log('paid')
     show(page, '#payMsg'); shot(page, '08-paid-page')
 
@@ -109,5 +114,4 @@ with sync_playwright() as p:
     page.wait_for_timeout(1500)
 
     ctx.close(); browser.close()
-(OUT / 'marks.tsv').write_text('\n'.join(marks) + '\n')
 log('done. files in video/capture/')

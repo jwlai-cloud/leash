@@ -46,21 +46,21 @@ SEGMENTS = [
     ('03', 'Your words become a signed mandate', [('vid', '03-request', -3.4, 5.0, 5.0), ('img', 'capture/03-mandate-page.png', None, 1, .1, 1.45, False)]),
     ('04', 'Real products from Channel3 · one seller agent per store', [('img', 'capture/neg-04.png', None, .2, .9, 1.2, False)]),
     ('05', 'Scam seller removed before your agent reads it', [('img', 'capture/05-removed.png', None, .5, .5, 1.06, True)]),
-    ('06', 'Prices are set in code, never by the AI', [('vid', '03-mandate', 0, None, None)]),
+    ('06', 'Prices are set in code, never by the AI', [('vid', '03-mandate', 3.2, None, None)]),
     ('07', 'Checked against your mandate before any money moves', [('img', 'capture/07-verdict-page.png', None, 1, .3, 1.35, False)]),
-    ('08', 'Paid with PayPal (sandbox) · mandate hash on the order', [('img', 'capture/08-paygate-page.png', 3.0, 1, .5, 1.25, False), ('img', 'capture/08-paid-page.png', None, 1, .4, 1.3, False)]),
-    ('09', 'PayPal Agent Toolkit, on a leash', [('img', 'capture/09-settled-page.png', 7.0, 0, 1, 1.25, False), ('img', 'capture/09-refunded-page.png', 4.0, 1, .4, 1.3, False), ('img', 'capture/09-blocked-panel.png', 5.0, .5, .5, 1.05, True), ('img', 'capture/09-webhooks-page.png', None, 0, 1, 1.25, False)]),
+    ('08', 'Paid with PayPal (sandbox) · mandate hash on the order', [('img', 'payshots/t6.png', 2.8, 1, .75, 1.75, False, 1.35), ('img', 'payshots/t40.3.png', 2.4, .5, .45, 1.7, False, 1.5), ('img', 'payshots/t50.png', None, 1, .45, 1.9, False, 1.6)]),
+    ('09', 'PayPal Agent Toolkit, on a leash', [('img', 'payshots/t60.png', 2.6, 1, .45, 1.9, False, 1.6), ('pan', 'payshots/t100.png', 13.0, 40, 2080, 0, 437), ('img', 'payshots/t88.png', None, 1, .12, 2.2, False, 1.9)]),
     ('10', None, [('img', 'cards/how.png', None, .5, .5, 1.04, False)]),
     ('11', None, [('img', 'cards/who.png', None, .5, .5, 1.04, False)]),
     ('12', None, [('img', 'cards/close.png', None, .5, .5, 1.03, False)]),
 ]
 
-def img_part(out, src, secs, fx, fy, zmax, fit):
+def img_part(out, src, secs, fx, fy, zmax, fit, zmin=1.0):
     n = max(1, round(secs * FPS))
-    pre = f'scale={W*2}:{H*2}:force_original_aspect_ratio=decrease,pad={W*2}:{H*2}:(ow-iw)/2:(oh-ih)/2:color={PAPER}'
+    pre = f'scale={W*2}:{H*2}:force_original_aspect_ratio=increase,crop={W*2}:{H*2}'
     if fit:
         pre = f'scale={int(W*2*.86)}:{int(H*2*.86)}:force_original_aspect_ratio=decrease,pad={W*2}:{H*2}:(ow-iw)/2:(oh-ih)/2:color={PAPER}'
-    zp = f"zoompan=z='1+({zmax}-1)*on/{n}':x='(iw-iw/zoom)*{fx}':y='(ih-ih/zoom)*{fy}':d={n}:s={W}x{H}:fps={FPS}"
+    zp = f"zoompan=z='{zmin}+({zmax}-{zmin})*on/{n}':x='(iw-iw/zoom)*{fx}':y='(ih-ih/zoom)*{fy}':d={n}:s={W}x{H}:fps={FPS}"
     path = CAP / src.split('/', 1)[1] if src.startswith('capture/') else V / src
     run('ffmpeg', '-y', '-loop', '1', '-i', str(path), '-vf', f'{pre},{zp}', '-frames:v', str(n), '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '18', str(out))
 
@@ -70,6 +70,12 @@ def vid_part(out, mark, off, src_len, secs):
     speed = secs / src_len
     run('ffmpeg', '-y', '-ss', f'{start:.2f}', '-t', f'{src_len:.2f}', '-i', str(PAGE_VIDEO),
         '-filter_complex', f'color=c=0xFAFBF9:s=1440x900:r={FPS}[bg];[0:v]colorkey=0x7E7E7E:0.02:0[k];[bg][k]overlay=shortest=1,setpts={speed:.4f}*PTS,scale={W}:{H}:flags=lanczos,fps={FPS}', '-an', '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '18', '-t', f'{secs:.2f}', str(out))
+
+def pan_part(out, src, secs, x, w, y0, y1):
+    h = int(w / 1.6)
+    expr = f"{y0}+({y1}-{y0})*min(t/{secs},1)"
+    run('ffmpeg', '-y', '-loop', '1', '-framerate', str(FPS), '-i', str(V / src), '-vf', f"crop={w}:{h}:{x}:'{expr}',scale={W}:{H}:flags=lanczos",
+        '-frames:v', str(round(secs * FPS)), '-pix_fmt', 'yuv420p', '-c:v', 'libx264', '-crf', '18', str(out))
 
 def caption(text):
     t = text.replace(':', r'\:').replace("'", r"\'")
@@ -81,17 +87,18 @@ TMP.mkdir(parents=True)
 seg_files = []
 for n, cap, parts in SEGMENTS:
     a = voice(n); total = dur(a) + PAD
-    fixed = sum(p[2] if p[0] == 'img' else (p[4] or 0) for p in parts if (p[2] if p[0] == 'img' else p[4]) is not None)
+    own = lambda p: p[4] if p[0] == 'vid' else p[2]
+    fixed = sum(own(p) for p in parts if own(p) is not None)
     files = []
     for i, p in enumerate(parts):
         out = TMP / f'{n}-{i}.mp4'
-        if p[0] == 'img':
+        if p[0] in ('img', 'pan'):
             secs = p[2] if p[2] is not None else total - fixed
-            img_part(out, p[1], secs, *p[3:])
+            (img_part if p[0] == 'img' else pan_part)(out, p[1], secs, *p[3:])
         else:
             mark, off, src_len, secs = p[1:]
             if src_len is None:  # the whole negotiation: from the mandate to the verdict
-                src_len = marks['04-feed'] - 1.6 - marks[mark]
+                src_len = marks['04-feed'] - 1.6 - (marks[mark] + off)
             secs = secs if secs is not None else total - fixed
             vid_part(out, mark, off, src_len, secs)
         files.append(out)
