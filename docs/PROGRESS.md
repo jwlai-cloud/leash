@@ -1,5 +1,23 @@
 # Progress
 
+## 2026-11-11 — live on Render, full flow verified
+Live: https://leash-i813.onrender.com (Render free plan, sleeps after 15 min idle).
+
+### Verified on real PayPal sandbox through the deployed UI
+- Order `2VX70995XS5396025`, $28.41 from kohls.com: capture `4K541815TN912083L` now REFUNDED; tracker `…-9400189801239253239989` SHIPPED (Orders v2 `/track`).
+- Toolkit `get_order` and `create_refund`; second refund blocked by Leash, shown in the settlement panel.
+- Webhooks `PAYMENT.CAPTURE.COMPLETED` and `PAYMENT.CAPTURE.REFUNDED` delivered and signature-verified.
+- Smoke test 2/2 against Render.
+
+### Fixed along the way
+- Toolkit returns PayPal errors as text; Leash counted them as success. Now reported as "PayPal refused".
+- Paying separate seller accounts breaks shipping and refunds (403, needs a Platform app). Payments go to the app's merchant; `SELLER_SANDBOX_EMAILS` left empty. See ADR 0006.
+
+### Next (priority order)
+1. Record the video from [DEMO_SCRIPT.md](DEMO_SCRIPT.md) (update for the negotiation floor and toolkit); upload to YouTube early.
+2. Devpost write-up from [SUBMISSION.md](SUBMISSION.md) (update for the pivot); select Channel3 and Render as sponsor tools. Deadline Thu 12 Nov, 12:00 PST.
+3. Mobile layout check.
+
 ## 2026-11-09 — negotiation floor
 
 ### Done
