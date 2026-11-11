@@ -44,7 +44,7 @@ SEGMENTS = [
     ('01', None, [('img', 'cards/title.png', 3.5, .5, .5, 1.03, False), ('img', 'cards/problem.png', None, .3, .4, 1.06, False)]),
     ('02', 'Leash · live on Render', [('img', 'capture/01-landing.png', None, .5, 0, 1.10, False)]),
     ('03', 'Your words become a signed mandate', [('vid', '03-request', -3.4, 5.0, 5.0), ('img', 'capture/03-mandate-page.png', None, 1, .1, 1.45, False)]),
-    ('04', 'Real products from Channel3 · one seller agent per store', [('img', 'capture/neg-04.png', None, .2, .9, 1.2, False)]),
+    ('04', 'Channel3: live products and prices from real stores', [('img', 'capture/neg-00.png', 6.0, .15, .3, 2.0, False, 1.6), ('img', 'capture/neg-02.png', None, .2, .9, 1.25, False)]),
     ('05', 'Scam seller removed before your agent reads it', [('img', 'capture/05-removed.png', None, .5, .5, 1.06, True)]),
     ('06', 'Prices are set in code, never by the AI', [('vid', '03-mandate', 3.2, None, None)]),
     ('07', 'Checked against your mandate before any money moves', [('img', 'capture/07-verdict-page.png', None, 1, .3, 1.35, False)]),

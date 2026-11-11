@@ -9,6 +9,15 @@
 
 **Sponsor tools to select:** Channel3, Render.
 
+**Testing instructions** (paste into the form's testing field)
+1. Open https://leash-i813.onrender.com. It's on a free server, so the first load can take up to a minute.
+2. Keep the default request and "Let a scam seller join" ticked, then press **Haggle for me**. Watch the scam seller get removed and the price come down.
+3. To pay, use any PayPal **sandbox personal** account (developer.paypal.com → Testing Tools → Sandbox Accounts), or the test buyer below. It's sandbox money only.
+4. After paying, watch the seller's agent ship and your agent check the order. Press **Pull the leash · refund**, then press it again: the second refund is blocked by Leash.
+5. Try "A $50 gift card for my nephew, under $60": no PayPal order is created.
+
+_Test buyer: add the sandbox personal login here, in the judges-only field if the form has one._
+
 ---
 
 ## Inspiration
@@ -35,7 +44,7 @@ It's not one agent with a credit card. It's a small market. Your agent, a few se
 10. **PayPal confirms it.** Payment and refund webhooks are only trusted after PayPal verifies their signature.
 
 ## How the agents and the PayPal Agent Toolkit work together
-- Every agent runs on the **Vercel AI SDK**, the same framework PayPal's Agent Toolkit is built on.
+- Every agent runs on the **Vercel AI SDK**, which PayPal's Agent Toolkit plugs straight into.
 - The agents get PayPal tools from the toolkit: `get_order` to check an order, `create_refund` to give money back. Shipping uses a tracking tool we added on PayPal's Orders API.
 - Leash wraps every tool before an agent sees it. Each call is checked against the deal: who's asking, which order, how much is left to refund. If the answer is no, the call never leaves our server, and the agent gets told why.
 - Each agent only gets the tools it needs, only for this one deal. The seller's agent can't refund. Your agent can't ship. Nobody can touch another order.
@@ -55,7 +64,7 @@ It's not one agent with a credit card. It's a small market. Your agent, a few se
 ## How we built it
 - **PayPal Agent Toolkit** (`@paypal/agent-toolkit`, AI SDK version) for the agents' PayPal tools, in sandbox mode, each wrapped by Leash.
 - **PayPal REST:** Orders v2 with token caching, itemised orders, `custom_id` linking the decision and mandate, idempotency keys on create and capture, order tracking, refunds, and webhook signature checks. The PayPal JS SDK buttons for checkout.
-- **Vercel AI SDK 4** over OpenRouter, with DeepSeek V4.1 Flash. Seller agents run in parallel. One negotiation costs about $0.0003 in AI.
+- **Vercel AI SDK 4** (the version the toolkit's AI SDK adapter uses) over OpenRouter, with DeepSeek V4.1 Flash. Seller agents run in parallel. One negotiation costs about $0.0003 in AI.
 - **Channel3** for live products and prices across stores, with a cache and a fallback snapshot of real results.
 - **Ed25519** signatures for the mandate.
 - A **$20 hard cap** on our own AI spend while building.

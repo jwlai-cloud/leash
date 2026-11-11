@@ -49,7 +49,7 @@ To pay, log in to the PayPal popup with a sandbox **personal** account (develope
 ## Tools used
 - **PayPal Agent Toolkit** (`@paypal/agent-toolkit`, AI SDK adapter): agents call `get_order` and `create_refund`, each wrapped by Leash's tool guard (least privilege, sandbox context). The toolkit's shipment tool needs a permission standard sandbox apps don't have, so shipping uses a Leash tool on Orders v2 `/track` with the same guard.
 - **PayPal REST:** Orders v2 (OAuth2 with token caching, itemised orders, optional `payee` routing to a seller account, `custom_id` audit link, `PayPal-Request-Id` idempotency), Orders v2 tracking, refunds, webhooks verified with `verify-webhook-signature`, JS SDK Buttons, sandbox accounts.
-- **Agent framework:** Vercel AI SDK 4 (the version PayPal's toolkit is built on) over OpenRouter. Each seller is an independent agent with private context; agents run in parallel.
+- **Agent framework:** Vercel AI SDK 4 (the version PayPal's toolkit adapter uses) over OpenRouter. Each seller is an independent agent with private context; agents run in parallel.
 - **AI model:** DeepSeek V4.1 Flash through OpenRouter (about $0.0003 per negotiation, reasoning turned off for speed). Buyer agent, seller agents, message screening and intent check. Claude, Gemini and Vertex AI are supported for the non-agent calls.
 - **Channel3:** live product search across retailers.
 - Node 22, Express, one HTML page, no build step.
