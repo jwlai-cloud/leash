@@ -2,7 +2,7 @@
 
 **Try it live:** https://leash-i813.onrender.com (PayPal sandbox; the first load can take up to a minute while the free server wakes up).
 
-Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/). Demo video: _YouTube link coming_.
+Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/). Demo video: https://youtu.be/gU87yyPrjsk
 
 You tell your AI agent what you want and how much you'll spend. It finds real products from real stores, haggles with each seller's agent for a better price, and pays with PayPal. Leash sits between the agents and checks everything that touches money:
 

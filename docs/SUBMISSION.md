@@ -5,7 +5,7 @@
 **Links**
 - Live app: https://leash-i813.onrender.com (free server, the first load can take up to a minute)
 - Code: https://github.com/jwlai-cloud/leash
-- Video: _add the YouTube link_
+- Video: https://youtu.be/gU87yyPrjsk
 
 **Sponsor tools to select:** Channel3, Render.
 
