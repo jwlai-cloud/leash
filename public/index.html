@@ -191,7 +191,7 @@ async function init() {
   });
   refreshSpent();
 }
-async function refreshSpent() { const l = await api('/api/ledger'); $('spent').textContent = `Spent this month ${usd(l.spent)} of ${usd(l.budget)}`; }
+async function refreshSpent() { const l = await api('/api/ledger'); $('spent').textContent = `This browser has spent ${usd(l.spent)} of its ${usd(l.budget)} monthly budget. Refunds go back into it.`; }
 
 // Big price ticks toward its new value.
 function setPrice(v) {
