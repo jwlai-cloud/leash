@@ -35,7 +35,7 @@ Rebuild a PNG after editing a spec: `node <archify>/bin/archify.mjs deliver <typ
 ## Components
 | File | Role |
 |------|------|
-| `server.js` | Express routes, SSE stream, in-memory decisions + ledger, rate limit, policy re-check at order and capture, PayPal webhook endpoint |
+| `server.js` | Express routes, SSE stream, in-memory decisions + per-visitor ledger, rate limit, policy re-check at order and capture, PayPal webhook endpoint |
 | `src/negotiate.js` | The negotiation floor. Async generator of events. All prices computed here. |
 | `src/mandate.js` | Parse cap, sign/verify mandate (Ed25519, key in `.leash-mandate-key.pem`) |
 | `src/channel3.js` | Channel3 `/v1/search`, normalise, disk cache `.channel3-cache.json`, snapshot fallback |

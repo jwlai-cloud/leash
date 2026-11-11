@@ -17,6 +17,7 @@ Live: https://leash-i813.onrender.com (Render free plan, sleeps after 15 min idl
 - Demo video (2:55, narrated in a Personal Voice) built from a live capture and a screen recording: `docs/VIDEO_SCRIPT.md`, `scripts/capture.py`, `scripts/build_video.py`.
 - Devpost story in plain language (`docs/SUBMISSION.md`), testing instructions for judges.
 - Diagrams refreshed: architecture, agent topology, sequence (PNG + interactive HTML).
+- Public-site hardening: removed the unused `PUT /api/policy` route (anyone could change the shared house rules), and spend is now tracked per visitor (random browser id), so judges' payments can't use up each other's monthly budget.
 
 ### Next (priority order)
 1. Video done (docs/VIDEO_SCRIPT.md, built by scripts/build_video.py). Upload to YouTube, public.
@@ -48,4 +49,4 @@ Live: https://leash-i813.onrender.com (Render free plan, sleeps after 15 min idl
 
 ### Known limits (deliberate)
 - Seller agents simulated per real listing; scam seller simulated. Labelled in the UI and README.
-- No auth, in-memory state.
+- No auth, in-memory state. Spend is kept per visitor by a self-chosen browser id, which keeps visitors apart but isn't authentication.

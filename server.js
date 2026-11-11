@@ -10,15 +10,17 @@ import { settle, refund } from './src/settle.js';
 import { agentRuntime } from './src/agents.js';
 import { toolkitMode } from './src/leash-tools.js';
 
-// ponytail: in-memory state, single demo user. Restart = reset. SQLite if multi-user ever matters.
-let policy = { ...DEFAULT_POLICY };
+// ponytail: in-memory state, restart = reset. The house rules are fixed; spend is tracked per visitor
+// (random id from the browser) so one visitor's payments can't use up another's budget. Real sign-in + DB if it goes multi-user.
+const policy = { ...DEFAULT_POLICY };
 const decisions = new Map(); // decisionId -> decision
 const orders = new Map(); // paypal orderId -> decisionId
 const ledger = [];
-const spent = () => ledger.reduce((s, e) => s + e.amount, 0);
-let pendingUsd = 0; // captures in flight, so parallel captures can't jointly overrun the budget
-// Verdicts are re-run at order and capture time: tightening policy applies to decisions already made.
-const recheck = (d) => evaluate({ cart: d.cart, policy, spentThisMonth: spent() + pendingUsd, signals: d.signals, mandate: d.mandate });
+const visitor = (req) => String(req.get('x-leash-visitor') || req.ip).slice(0, 64);
+const pending = new Map(); // visitor -> captures in flight, so parallel captures can't jointly overrun the budget
+const spent = (v) => ledger.reduce((s, e) => s + (e.visitor === v ? e.amount : 0), 0) + (pending.get(v) || 0);
+// Verdicts are re-run at order and capture time, against the visitor's spend at that moment.
+const recheck = (d) => evaluate({ cart: d.cart, policy, spentThisMonth: spent(d.visitor), signals: d.signals, mandate: d.mandate });
 
 const app = express();
 const webhooks = []; // last verified PayPal events, newest first
@@ -61,19 +63,7 @@ const limit = (req, res, next) => {
 };
 
 app.get('/api/config', (_req, res) =>
-  res.json({ aiMode, aiModel, aiBudget: aiBudget.status(), agentRuntime, toolkitMode, productsMode, paypalMode, paypalClientId, webhooks: Boolean(webhookId), policy, spent: spent() }));
-
-app.put('/api/policy', (req, res) => {
-  const b = req.body || {};
-  const num = (v, d) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : d);
-  policy = {
-    maxPerOrder: num(b.maxPerOrder, policy.maxPerOrder),
-    escalateAbove: num(b.escalateAbove, policy.escalateAbove),
-    monthlyBudget: num(b.monthlyBudget, policy.monthlyBudget),
-    maxQtyPerItem: num(b.maxQtyPerItem, policy.maxQtyPerItem),
-  };
-  res.json(policy);
-});
+  res.json({ aiMode, aiModel, aiBudget: aiBudget.status(), agentRuntime, toolkitMode, productsMode, paypalMode, paypalClientId, webhooks: Boolean(webhookId), policy }));
 
 // Live negotiation as a server-sent event stream; the final verdict becomes a payable decision.
 app.post('/api/negotiate', limit, async (req, res) => {
@@ -82,10 +72,10 @@ app.post('/api/negotiate', limit, async (req, res) => {
   const send = stream(res);
   const t0 = Date.now();
   try {
-    for await (const e of negotiate({ request, includeScam: req.body?.includeScam !== false, policy, spentThisMonth: spent() + pendingUsd })) {
+    for await (const e of negotiate({ request, includeScam: req.body?.includeScam !== false, policy, spentThisMonth: spent(visitor(req)) })) {
       if (e.type !== 'verdict') { send({ ...e, t: Date.now() - t0 }); continue; }
       const id = `dec_${randomUUID().slice(0, 8)}`;
-      decisions.set(id, { id, at: new Date().toISOString(), request, cart: e.cart, total: e.total, verdict: e.verdict, mandate: e.mandate,
+      decisions.set(id, { id, visitor: visitor(req), at: new Date().toISOString(), request, cart: e.cart, total: e.total, verdict: e.verdict, mandate: e.mandate,
         signals: { injections: [], drift: e.drift } });
       send({ type: 'verdict', id, verdict: e.verdict, score: e.score, total: e.total, reasons: e.reasons, drift: e.drift, listPrice: e.listPrice,
         payee: e.cart[0] ? payeeFor(e.cart[0].merchant) : null, mandateValid: e.mandate ? verifyMandate(e.mandate) : false, t: Date.now() - t0 });
@@ -129,19 +119,19 @@ app.post('/api/orders/:id/capture', async (req, res) => {
   if (v.verdict === 'BLOCK') return res.status(403).json({ error: `Blocked at capture. ${v.reasons[0]?.message || ''}` });
   if (v.verdict === 'ESCALATE' && !d.confirmed) return res.status(409).json({ error: 'Policy changed: human confirmation required.' });
   d.capturing = true;
-  pendingUsd += d.total;
+  pending.set(d.visitor, (pending.get(d.visitor) || 0) + d.total);
   try {
     const cap = await captureOrder(req.params.id);
     if (cap.status !== 'COMPLETED') return res.status(402).json({ error: `Capture status ${cap.status}` });
     const captureId = cap.purchase_units?.[0]?.payments?.captures?.[0]?.id || null;
     d.captured = { id: cap.id, captureId, status: cap.status, payer: cap.payer?.email_address || null };
-    ledger.unshift({ at: new Date().toISOString(), decisionId: d.id, orderId: cap.id, captureId, amount: d.total, items: d.cart.map((i) => `${i.qty}× ${i.name}`).join(', '), verdict: d.verdict });
+    ledger.unshift({ visitor: d.visitor, at: new Date().toISOString(), decisionId: d.id, orderId: cap.id, captureId, amount: d.total, items: d.cart.map((i) => `${i.qty}× ${i.name}`).join(', '), verdict: d.verdict });
     res.json(d.captured);
   } catch (e) {
     res.status(502).json({ error: e.message });
   } finally {
     d.capturing = false;
-    pendingUsd -= d.total;
+    pending.set(d.visitor, pending.get(d.visitor) - d.total);
   }
 });
 
@@ -168,7 +158,7 @@ app.post('/api/orders/:id/refund', limit, async (req, res) => {
   const send = stream(res);
   try {
     for await (const e of refund(paidOrder(d), String(req.body?.reason || '').slice(0, 200))) {
-      if (e.type === 'refunded' && e.ok) ledger.unshift({ at: new Date().toISOString(), decisionId: d.id, orderId: d.orderId, amount: -e.amount, items: `Refund · ${d.cart[0]?.name || ''}`, verdict: 'REFUND' });
+      if (e.type === 'refunded' && e.ok) ledger.unshift({ visitor: d.visitor, at: new Date().toISOString(), decisionId: d.id, orderId: d.orderId, amount: -e.amount, items: `Refund · ${d.cart[0]?.name || ''}`, verdict: 'REFUND' });
       send(e);
     }
   } catch (e) { console.error('refund failed:', e); send({ type: 'error', message: e.message }); }
@@ -176,7 +166,10 @@ app.post('/api/orders/:id/refund', limit, async (req, res) => {
   res.end();
 });
 
-app.get('/api/ledger', (_req, res) => res.json({ spent: spent(), budget: policy.monthlyBudget, entries: ledger }));
+app.get('/api/ledger', (req, res) => {
+  const v = visitor(req);
+  res.json({ spent: spent(v), budget: policy.monthlyBudget, entries: ledger.filter((e) => e.visitor === v).map(({ visitor: _, ...e }) => e) });
+});
 
 app.get('/api/decisions', (_req, res) => res.json([...decisions.values()].reverse().slice(0, 20)));
 
